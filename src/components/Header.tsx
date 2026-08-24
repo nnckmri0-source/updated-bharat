@@ -169,6 +169,9 @@ export default function Header() {
                   {c.name}
                 </a>
               ))}
+              <Link href="/visualstories" className="cat-nav-item">
+                <PlayCircle size={13} /> Visual Stories
+              </Link>
               <Link href="/web-stories" className="cat-nav-item">
                 <PlayCircle size={13} /> {t("webStories")}
               </Link>

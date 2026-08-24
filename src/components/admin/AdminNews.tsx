@@ -5,8 +5,9 @@ import { Pencil, Plus, Trash2, ArrowLeft, Filter } from "lucide-react";
 import { useSiteData, slugify, norm, type NewsArticle } from "@/lib/store";
 import { upsertSanityArticle, deleteSanityArticle } from "@/lib/sanity-admin";
 import { Card, Btn, TInput, TArea, TSelect, ImageInput, EmptyState } from "./ui";
+import RichTextEditor from "./RichTextEditor";
 
-const emptyForm = { title: "", slug: "", channel: "", date: "", image: "", content: "" };
+const emptyForm = { title: "", slug: "", channel: "", date: "", image: "", imageAlt: "", imageCaption: "", description: "", content: "" };
 
 export default function AdminNews() {
   const { data, update } = useSiteData();
@@ -25,7 +26,7 @@ export default function AdminNews() {
   };
 
   const openEdit = (a: NewsArticle) => {
-    setForm({ title: a.title, slug: a.slug, channel: a.channel ?? "", date: a.date, image: a.image ?? "", content: a.content });
+    setForm({ title: a.title, slug: a.slug, channel: a.channel ?? "", date: a.date, image: a.image ?? "", imageAlt: a.imageAlt ?? "", imageCaption: a.imageCaption ?? "", description: a.description ?? "", content: a.content });
     setEditingSlug(a.slug);
     setFormOpen(true);
   };
@@ -40,8 +41,11 @@ export default function AdminNews() {
       channel: channel?.slug ?? null,
       channelName: channel?.name ?? null,
       date: form.date.trim() || "Today",
+      description: form.description.trim(),
       content: form.content.trim() || form.title.trim(),
       image: norm(form.image),
+      imageAlt: form.imageAlt.trim() || null,
+      imageCaption: form.imageCaption.trim() || null,
     };
 
     if (editingSlug) {
@@ -78,16 +82,19 @@ export default function AdminNews() {
           <TSelect label="Channel" value={form.channel} onChange={(v) => setForm({ ...form, channel: v })} options={channelOptions} />
           <TInput label="Date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} placeholder="Apr 23, 2026" />
           <div className="md:col-span-2">
-            <ImageInput label="Cover Image" value={form.image} onChange={(v) => setForm({ ...form, image: v })} previewHeight={90} />
+            <TArea label="Description (SEO excerpt) — 150-160 chars" value={form.description} onChange={(v) => setForm({ ...form, description: v })} rows={2} placeholder="Short summary shown under title and in Google results…" hint={`${form.description.length}/320 chars — shown under title + meta description`} />
           </div>
           <div className="md:col-span-2">
-            <TArea
-              label="Content (paragraphs separated by blank line)"
-              value={form.content}
-              onChange={(v) => setForm({ ...form, content: v })}
-              rows={10}
-              hint="Paste a YouTube link on its own line to embed a video. Start a line with IMG:https://… to insert an image between paragraphs."
-            />
+            <ImageInput label="Cover Image" value={form.image} onChange={(v) => setForm({ ...form, image: v })} previewHeight={90} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+            <TInput label="Cover Alt Text" value={form.imageAlt} onChange={(v) => setForm({ ...form, imageAlt: v })} placeholder="Alt for SEO & accessibility" />
+            <TInput label="Cover Caption" value={form.imageCaption} onChange={(v) => setForm({ ...form, imageCaption: v })} placeholder="Caption below cover (optional)" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-[13px] font-semibold text-slate-700 mb-1">Content — H1/H2/Bold/Italic + Images with caption/alt</label>
+            <RichTextEditor value={form.content} onChange={(v) => setForm({ ...form, content: v })} placeholder="Write article here… Use toolbar for H1/H2, Bold, Italic, Image (with caption/alt), YouTube…" />
+            <p className="text-[11px] text-slate-400 mt-1">Legacy: plain paragraphs separated by blank line, YouTube URL on its own line, or <code>IMG:https://…</code> still works. New editor stores rich HTML with headings & inline images (caption/alt).</p>
           </div>
         </div>
         <div className="mt-5 flex gap-2">

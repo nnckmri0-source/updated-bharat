@@ -17,8 +17,7 @@ function youtubeEmbed(url: string): string | null {
 }
 
 /**
- * Renders one content block: a YouTube URL becomes an embedded video,
- * an "IMG:url" line becomes an inline image, everything else is a paragraph.
+ * Legacy: Renders one content block: YouTube URL → embed, "IMG:url" → image, else paragraph.
  */
 function ContentBlock({ block }: { block: string }) {
   const trimmed = block.trim();
@@ -46,6 +45,15 @@ function ContentBlock({ block }: { block: string }) {
     );
   }
   return <p>{trimmed}</p>;
+}
+
+function isHtmlContent(s: string): boolean {
+  return /<(h1|h2|h3|figure|p|strong|em|a|blockquote|ul|ol|div)[\s>]/i.test(s);
+}
+
+function RichHtml({ html }: { html: string }) {
+  // Enhance html: ensure links open new tab, add classes for images
+  return <div className="rich-article" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 export default function NewsClient({ slug }: { slug: string }) {
@@ -84,7 +92,8 @@ export default function NewsClient({ slug }: { slug: string }) {
 
   const channel = channels.find((c) => c.slug === article.channel);
   const related = news.filter((n) => n.channel === article.channel && n.slug !== slug).slice(0, 4);
-  const paragraphs = article.content.split("\n\n").filter(Boolean);
+  const useHtml = isHtmlContent(article.content);
+  const paragraphs = !useHtml ? article.content.split("\n\n").filter(Boolean) : [];
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (typeof window !== "undefined" ? window.location.origin : "https://bhaskar.naws.in");
   const shareUrl = `${baseUrl}/news/${article.slug}`;
 
@@ -122,7 +131,19 @@ export default function NewsClient({ slug }: { slug: string }) {
             </ol>
           </nav>
 
-          <h1 className="article-title mb-3">{article.title}</h1>
+          <h1 className="article-title mb-2">{article.title}</h1>
+          {article.description && (
+            <p style={{ color: "var(--text-muted)", fontSize: "1rem", lineHeight: 1.6, margin: "0 0 14px", borderLeft: "3px solid var(--orange)", paddingLeft: 12 }}>
+              {article.description}
+            </p>
+          )}
+          {article.image && (
+            <figure style={{ margin: "0 0 16px" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={article.image} alt={article.imageAlt ?? article.title} style={{ width: "100%", maxHeight: 520, objectFit: "cover", borderRadius: 10 }} loading="eager" decoding="async" />
+              {article.imageCaption && <figcaption style={{ fontSize: "0.78rem", color: "var(--text-muted)", textAlign: "center", marginTop: 6, fontStyle: "italic" }}>{article.imageCaption}</figcaption>}
+            </figure>
+          )}
 
           {/* Compact Branding Box */}
           <div className="border" style={{ borderRadius: 6, padding: 8, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, background: "var(--surface)", borderColor: "var(--border)" }}>
@@ -171,12 +192,21 @@ export default function NewsClient({ slug }: { slug: string }) {
 
           {/* Article Content */}
           <div className="article-content mb-5" style={{ fontSize: `${zoom}rem` }}>
-            {paragraphs.map((p, i) => (
-              <div key={i}>
-                <ContentBlock block={p} />
-                {i === 1 && (settings.adsenseInArticleCode ? <div dangerouslySetInnerHTML={{ __html: settings.adsenseInArticleCode }} /> : renderAd(settings.adSlots.inArticle, "Advertisement"))}
-              </div>
-            ))}
+            {useHtml ? (
+              <>
+                <RichHtml html={article.content} />
+                <div style={{ marginTop: 18 }}>
+                  {settings.adsenseInArticleCode ? <div dangerouslySetInnerHTML={{ __html: settings.adsenseInArticleCode }} /> : renderAd(settings.adSlots.inArticle, "Advertisement")}
+                </div>
+              </>
+            ) : (
+              paragraphs.map((p, i) => (
+                <div key={i}>
+                  <ContentBlock block={p} />
+                  {i === 1 && (settings.adsenseInArticleCode ? <div dangerouslySetInnerHTML={{ __html: settings.adsenseInArticleCode }} /> : renderAd(settings.adSlots.inArticle, "Advertisement"))}
+                </div>
+              ))
+            )}
           </div>
 
           {/* Share block */}

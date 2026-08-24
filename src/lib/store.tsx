@@ -10,16 +10,47 @@
 // ============================================================================
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { news as defaultNews, type NewsArticle } from "@/data/news";
+import { news as defaultNews } from "@/data/news";
 import { channels as defaultChannels, type Channel } from "@/data/channels";
-import { stories as defaultStories, type WebStory } from "@/data/stories";
+import { stories as defaultStories } from "@/data/stories";
 import { siteConfig as defaultSiteConfig } from "@/data/site";
 import { USE_SANITY, fetchSanitySiteData } from "@/lib/content-source";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-export type { NewsArticle, Channel, WebStory };
+export type NewsArticle = {
+  slug: string;
+  title: string;
+  channel: string | null;
+  channelName: string | null;
+  date: string;
+  content: string; // HTML or legacy "\n\n" paragraphs; rendered as HTML
+  description?: string; // SEO excerpt under title
+  image: string | null;
+  imageAlt?: string | null;
+  imageCaption?: string | null;
+};
+
+export type WebStorySlide = {
+  image: string | null;
+  title?: string | null;
+  caption?: string | null;
+  alt?: string | null;
+};
+
+export type WebStory = {
+  id: string;
+  title: string;
+  slug?: string | null;
+  category?: string | null;
+  description?: string | null;
+  image: string | null;
+  url: string;
+  slides?: WebStorySlide[];
+};
+
+export type { Channel };
 
 export type EPaperEdition = {
   name: string;
@@ -119,14 +150,24 @@ export const ADMIN_AUTH_KEY = "bhaskar_admin_auth";
 export function buildDefaults(): SiteData {
   const ticker = Array.from(new Set(defaultSiteConfig.ticker.map((t) => t.trim()).filter(Boolean)));
   return {
-    news: defaultNews.map((n) => ({ ...n, image: norm(n.image) })),
+    news: defaultNews.map((n) => ({
+      ...n,
+      description: (n as unknown as Record<string, unknown>).description as string | undefined ?? "",
+      imageAlt: null,
+      imageCaption: null,
+      image: norm(n.image),
+    })),
     channels: defaultChannels.map((c) => ({ ...c, icon: norm(c.icon) })),
     stories: defaultStories.map((s, i) => ({
       ...s,
       id: s.id ?? `story-${i}`,
+      slug: (s as unknown as Record<string, unknown>).slug as string | undefined ?? null,
+      category: (s as unknown as Record<string, unknown>).category as string | undefined ?? null,
+      description: (s as unknown as Record<string, unknown>).description as string | undefined ?? null,
       title: s.title || "Web Story",
       image: norm(s.image),
-      url: s.url === "#" || s.url.includes("index.html") ? "/web-stories" : s.url,
+      url: (s as unknown as Record<string, unknown>).slug ? `/visualstories/${(s as unknown as Record<string, unknown>).slug}` : s.url === "#" || s.url.includes("index.html") ? "/web-stories" : s.url,
+      slides: (s as unknown as Record<string, unknown>).slides as WebStorySlide[] | undefined ?? undefined,
     })),
     editions: [
       {

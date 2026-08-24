@@ -1321,6 +1321,19 @@ img {
 .article-content p {
   margin-bottom: 1rem;
 }
+.rich-article h1 { font-size: 1.6rem; font-weight: 800; margin: 1.2em 0 0.5em; line-height: 1.3; color: var(--text); }
+.rich-article h2 { font-size: 1.35rem; font-weight: 800; margin: 1.1em 0 0.5em; line-height: 1.35; color: var(--text); border-left: 3px solid var(--orange); padding-left: 10px; }
+.rich-article h3 { font-size: 1.15rem; font-weight: 700; margin: 1em 0 0.4em; color: var(--text); }
+.rich-article blockquote { border-left: 3px solid var(--orange); margin: 1em 0; padding: 8px 14px; background: var(--orange-light); border-radius: 6px; font-style: italic; color: var(--text-muted); }
+.rich-article strong { font-weight: 800; color: var(--text); }
+.rich-article em { font-style: italic; }
+.rich-article a { color: var(--orange); text-decoration: underline; }
+.rich-article ul, .rich-article ol { margin: 0.8em 0 1em 1.4em; }
+.rich-article li { margin-bottom: 0.35em; }
+.rich-article .article-inline-figure { margin: 18px 0; text-align: center; }
+.rich-article .article-inline-figure img { width: 100%; max-height: 520px; object-fit: cover; border-radius: 10px; }
+.rich-article .article-inline-figure figcaption { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; font-style: italic; }
+.rich-article figure.editor-figure { margin: 18px 0; }
 
 /* ---------- mobile search overlay ---------- */
 .mobile-search-overlay {

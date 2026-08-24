@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { SiteDataProvider } from "@/lib/store";
 import { siteConfig } from "@/data/site";
 import SiteHeadInject from "@/components/SiteHeadInject";
+
+const GA_MEASUREMENT_ID = "G-8NY719Y959";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -28,6 +31,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SiteHeadInject />
           {children}
         </SiteDataProvider>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
       </body>
     </html>
   );

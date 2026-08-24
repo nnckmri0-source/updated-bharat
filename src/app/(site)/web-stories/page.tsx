@@ -18,41 +18,47 @@ export default function WebStoriesPage() {
         <div style={{ background: "var(--orange)", borderRadius: 20, width: 60, height: 4, margin: "12px auto 0" }} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
-        {stories.map((s) => (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16 }}>
+        {stories.map((s) => {
+          const href = s.slug ? `/visualstories/${s.slug}` : "/web-stories";
+          return (
           <div key={s.id ?? s.title} style={{ marginBottom: 8 }}>
-            <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,.1)", aspectRatio: "4/5", marginBottom: 10 }}>
-              <Link href="/web-stories" style={{ display: "block", width: "100%", height: "100%" }}>
+            <Link href={href} style={{ display: "block", textDecoration: "none" }}>
+              <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 16px rgba(0,0,0,.15)", aspectRatio: "9/16", marginBottom: 10, background: "#000" }}>
                 {s.image ? (
                   <img src={s.image} alt={s.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" decoding="async" />
                 ) : (
                   <div style={{ width: "100%", height: "100%", background: "var(--orange-light)" }} />
                 )}
-              </Link>
-              <div style={{ position: "absolute", top: 8, right: 8 }}>
-                <div style={{ background: "rgba(0,0,0,.75)", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
-                  <Layers size={14} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,.75) 0%, transparent 55%)" }} />
+                <div style={{ position: "absolute", top: 8, left: 8, right: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ background: "rgba(255,255,255,.95)", color: "#111", fontSize: 9, fontWeight: 800, letterSpacing: 0.5, padding: "3px 6px", borderRadius: 4, textTransform: "uppercase" }}>{s.category ?? "Story"}</span>
+                  <div style={{ background: "rgba(0,0,0,.6)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", backdropFilter: "blur(4px)" }}>
+                    <Layers size={12} />
+                  </div>
+                </div>
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: 10, color: "#fff" }}>
+                  <h3 style={{ fontSize: "0.92rem", fontWeight: 800, lineHeight: 1.3, margin: "0 0 4px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{s.title}</h3>
+                  {s.description && <p style={{ fontSize: "0.7rem", opacity: 0.9, margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{s.description}</p>}
+                </div>
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: 6, display: "flex", gap: 3 }}>
+                  <div style={{ flex: 1, background: "rgba(255,255,255,.9)", borderRadius: 20, height: 2 }} />
+                  <div style={{ flex: 1, background: "rgba(255,255,255,.4)", borderRadius: 20, height: 2 }} />
+                  <div style={{ flex: 1, background: "rgba(255,255,255,.4)", borderRadius: 20, height: 2 }} />
                 </div>
               </div>
-              {/* progress bars */}
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: 8, display: "flex", gap: 4, background: "linear-gradient(transparent, rgba(0,0,0,.4))" }}>
-                <div style={{ flex: 1, background: "rgba(255,255,255,.75)", borderRadius: 20, height: 3 }} />
-                <div style={{ flex: 1, background: "rgba(255,255,255,.5)", borderRadius: 20, height: 3 }} />
-                <div style={{ flex: 1, background: "rgba(255,255,255,.5)", borderRadius: 20, height: 3 }} />
-                <div style={{ flex: 1, background: "rgba(255,255,255,.25)", borderRadius: 20, height: 3 }} />
-              </div>
-            </div>
+            </Link>
             <div style={{ padding: "0 2px" }}>
-              <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px", lineHeight: 1.4, minHeight: "2.8em", overflow: "hidden" }}>
-                <Link href="/web-stories" style={{ color: "var(--text)" }}>{s.title}</Link>
+              <h3 style={{ fontSize: "0.95rem", fontWeight: 700, margin: "0 0 4px", lineHeight: 1.4, minHeight: "2.8em", overflow: "hidden" }}>
+                <Link href={href} style={{ color: "var(--text)" }}>{s.title}</Link>
               </h3>
-              <div style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 500 }}>
+              <div style={{ color: "var(--text-muted)", fontSize: "0.72rem", fontWeight: 500 }}>
                 <Calendar size={11} style={{ display: "inline", marginRight: 4 }} />
-                08 May 2026
+                View Story →
               </div>
             </div>
           </div>
-        ))}
+        );})}
         {stories.length === 0 && (
           <p style={{ color: "var(--text-muted)", gridColumn: "1 / -1", textAlign: "center", padding: "40px 0" }}>No web stories yet.</p>
         )}

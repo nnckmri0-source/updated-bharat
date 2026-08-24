@@ -35,21 +35,75 @@ export function sanityImg(url: string | null | undefined, w = 800): string | nul
 }
 
 // ---------------------------------------------------------------------------
-// Portable Text → the site's plain-text format
-//   blocks joined with \n\n, images as "IMG:<url>", youtube as its URL line
+// Portable Text → HTML (preserves h1/h2/bold/italic/links) + legacy plain-text
 // ---------------------------------------------------------------------------
-export function portableTextToContent(blocks: unknown[] | null | undefined): string {
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+export function portableTextToHtml(blocks: unknown[] | null | undefined): string {
   if (!Array.isArray(blocks)) return "";
-  const parts: string[] = [];
+  let html = "";
   for (const b of blocks) {
     if (!b || typeof b !== "object") continue;
     const block = b as Record<string, unknown>;
     if (block._type === "block") {
-      const spans = Array.isArray(block.children)
-        ? (block.children as { text?: string }[]).map((c) => c.text ?? "").join("")
-        : "";
+      const style = (block.style as string) || "normal";
+      const children = (block.children as Array<Record<string, unknown>>) ?? [];
+      let inner = "";
+      for (const ch of children) {
+        let t = escapeHtml(String(ch.text ?? ""));
+        const marks = (ch.marks as string[]) ?? [];
+        const markDefs = (block.markDefs as Array<Record<string, unknown>>) ?? [];
+        for (const m of marks) {
+          if (m === "strong") t = `<strong>${t}</strong>`;
+          else if (m === "em") t = `<em>${t}</em>`;
+          else if (m === "underline") t = `<u>${t}</u>`;
+          else if (m === "strike-through") t = `<s>${t}</s>`;
+          else {
+            const def = markDefs.find((d) => d._key === m);
+            if (def && def._type === "link" && def.href) t = `<a href="${escapeHtml(String(def.href))}" target="_blank" rel="noopener noreferrer">${t}</a>`;
+          }
+        }
+        inner += t;
+      }
+      if (!inner.trim()) continue;
+      if (style === "h1") html += `<h1>${inner}</h1>\n\n`;
+      else if (style === "h2") html += `<h2>${inner}</h2>\n\n`;
+      else if (style === "h3") html += `<h3>${inner}</h3>\n\n`;
+      else if (style === "blockquote") html += `<blockquote>${inner}</blockquote>\n\n`;
+      else html += `<p>${inner}</p>\n\n`;
+    } else if (block._type === "image") {
+      const url = (block.asset as { url?: string } | undefined)?.url;
+      if (url) {
+        const alt = escapeHtml(String((block.alt as string) ?? ""));
+        const caption = escapeHtml(String((block.caption as string) ?? ""));
+        const src = sanityImg(url, 900) ?? url;
+        html += `<figure class="article-inline-figure"><img src="${src}" alt="${alt}" loading="lazy" />${caption ? `<figcaption>${caption}</figcaption>` : ""}</figure>\n\n`;
+      }
+    } else if (block._type === "youtube") {
+      const url = (block as { url?: string }).url;
+      if (url) html += `<p>${escapeHtml(url)}</p>\n\n`;
+    }
+  }
+  return html.trim();
+}
+
+// Legacy: Portable Text → the site's plain-text format (for backward compat)
+// Blocks joined with \n\n, images as "IMG:<url>", youtube as its URL line
+export function portableTextToContent(blocks: unknown[] | null | undefined): string {
+  const html = portableTextToHtml(blocks);
+  if (!html) return "";
+  // For legacy callers that expect plain text with IMG lines: convert HTML back to IMG-like lines
+  // But we keep html for new rendering; callers should use portableTextToHtml directly.
+  // This fallback still extracts text + images for old storage format.
+  const parts: string[] = [];
+  for (const b of blocks ?? []) {
+    if (!b || typeof b !== "object") continue;
+    const block = b as Record<string, unknown>;
+    if (block._type === "block") {
+      const spans = Array.isArray(block.children) ? (block.children as { text?: string }[]).map((c) => c.text ?? "").join("") : "";
       if (spans.trim()) {
-        // round-trip: "[Image: url]" written by the admin panel → IMG: line
         const imgMatch = spans.trim().match(/^\[Image: (.+)\]$/);
         parts.push(imgMatch ? `IMG:${imgMatch[1]}` : spans);
       }
@@ -71,10 +125,13 @@ const QUERIES = {
   articles: `*[_type == "article" && published == true] | order(date desc) {
     "slug": slug.current,
     title,
+    description,
     "channel": channel->slug.current,
     "channelName": channel->name,
     date,
     "image": coverImage.asset->url,
+    "imageAlt": coverImage.alt,
+    "imageCaption": coverImage.caption,
     body
   }`,
   channels: `*[_type == "channel"] | order(name asc) {
@@ -85,9 +142,20 @@ const QUERIES = {
   }`,
   stories: `*[_type == "story" && published == true] | order(_createdAt desc) {
     "id": _id,
+    "slug": slug.current,
     title,
+    category,
+    description,
     "image": image.asset->url,
-    link
+    "imageAlt": image.alt,
+    link,
+    slides[]{
+      "image": image.asset->url,
+      "imageAlt": image.alt,
+      title,
+      caption,
+      alt
+    }
   }`,
   editions: `*[_type == "edition"] | order(date desc) {
     name,
@@ -144,11 +212,14 @@ export async function fetchSanitySiteData(): Promise<Partial<SiteData> | null> {
     const news: NewsArticle[] = (articles ?? []).map((a: Record<string, unknown>) => ({
       slug: String(a.slug ?? ""),
       title: String(a.title ?? "Untitled"),
+      description: String((a.description as string) ?? ""),
       channel: (a.channel as string) ?? null,
       channelName: (a.channelName as string) ?? null,
       date: String(a.date ?? ""),
-      content: portableTextToContent(a.body as unknown[]),
+      content: portableTextToHtml(a.body as unknown[]) || portableTextToContent(a.body as unknown[]),
       image: sanityImg(a.image as string),
+      imageAlt: (a.imageAlt as string) ?? null,
+      imageCaption: (a.imageCaption as string) ?? null,
     }));
 
     const chanList: Channel[] = (channels ?? []).map((c: Record<string, unknown>) => ({
@@ -158,12 +229,26 @@ export async function fetchSanitySiteData(): Promise<Partial<SiteData> | null> {
       description: String(c.description ?? ""),
     }));
 
-    const storyList: WebStory[] = (stories ?? []).map((s: Record<string, unknown>) => ({
-      id: String(s.id ?? `story-${Math.random().toString(36).slice(2, 8)}`),
-      title: String(s.title ?? "Web Story"),
-      url: (s.link as string) && (s.link as string) !== "#" ? (s.link as string) : "/web-stories",
-      image: sanityImg(s.image as string, 400),
-    }));
+    const storyList: WebStory[] = (stories ?? []).map((s: Record<string, unknown>) => {
+      const slug = (s.slug as string) ?? null;
+      const slidesRaw = (s.slides as Array<Record<string, unknown>>) ?? [];
+      const slides = slidesRaw.map((sl) => ({
+        image: sanityImg(sl.image as string, 800),
+        title: (sl.title as string) ?? null,
+        caption: (sl.caption as string) ?? null,
+        alt: (sl.alt as string) ?? (sl.imageAlt as string) ?? null,
+      }));
+      return {
+        id: String(s.id ?? `story-${Math.random().toString(36).slice(2, 8)}`),
+        slug,
+        category: (s.category as string) ?? null,
+        description: (s.description as string) ?? null,
+        title: String(s.title ?? "Web Story"),
+        url: slug ? `/visualstories/${slug}` : (s.link as string) && (s.link as string) !== "#" ? (s.link as string) : "/web-stories",
+        image: sanityImg(s.image as string, 400),
+        slides: slides.length ? slides : undefined,
+      };
+    });
 
     const editionList: EPaperEdition[] = (editions ?? []).map((e: Record<string, unknown>) => ({
       name: String(e.name ?? "Edition"),
