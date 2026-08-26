@@ -213,12 +213,7 @@ export function AdminPassword() {
   return (
     <Card
       title="Admin Password"
-      subtitle="Used to log into this panel. Default is “admin123” — change it!"
-      actions={
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-600">
-          <KeyRound size={12} /> Current: {data.settings.adminPassword}
-        </span>
-      }
+      subtitle="Change your admin login password"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
         <TInput label="Current Password" value={current} onChange={setCurrent} type="password" />

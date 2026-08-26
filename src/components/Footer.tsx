@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Link2, Grid3x3, Mail, MoreHorizontal, Settings } from "lucide-react";
+import { ChevronRight, Link2, Grid3x3, Mail, MoreHorizontal } from "lucide-react";
 import { useSiteData } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 import NewsletterForm from "@/components/NewsletterForm";
@@ -46,7 +46,6 @@ export default function Footer() {
                 {footer.quickLinks.map((l) => (
                   <Link key={l.title} href={l.href} className="footer-link"><ChevronRight size={12} /> {l.title}</Link>
                 ))}
-                <Link href="/admin" className="footer-link"><ChevronRight size={12} /> <Settings size={12} /> {t("adminPanel")}</Link>
               </div>
               <div>
                 <div className="footer-heading">

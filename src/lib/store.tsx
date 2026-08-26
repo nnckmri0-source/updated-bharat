@@ -185,7 +185,7 @@ export function buildDefaults(): SiteData {
       {
         name: "Updated Bharat",
         date: "Latest Edition",
-        cover: "https://picsum.photos/seed/updated-bharat-epaper/600/800",
+        cover: "https://placehold.co/600x800/f47216/ffffff?text=E-Paper",
         pdf: "",
       },
     ],

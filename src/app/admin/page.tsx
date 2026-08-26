@@ -119,10 +119,6 @@ export default function AdminPage() {
                 Login to Admin
               </button>
             </form>
-            <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-center text-[11px] text-slate-400">
-              Default password: <code className="font-bold text-slate-600">admin123</code> — change it in <strong>Admin Password</strong> after
-              logging in.
-            </div>
             <Link href="/" className="mt-4 block text-center text-[12px] font-semibold text-orange-500 hover:underline">
               ← Back to website
             </Link>
