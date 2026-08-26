@@ -139,10 +139,11 @@ export function slugify(s: string): string {
     .slice(0, 80);
 }
 
-// v3: random unique content + picsum images — old stored data (clone images/news) is ignored
-// so the new defaults apply. Later, migrate or drop once real (Firebase) data lands.
-export const STORAGE_KEY = "bhaskar_site_data_v4";
+// v5: visual stories (slug/slides IndiaToday) + rich article (description/alt/caption/H1-H3) — bump so old v4 cache is ignored
+// This fixes flicker where static HTML shows new build but old localStorage overwrites to stale data.
+export const STORAGE_KEY = "bhaskar_site_data_v5";
 export const ADMIN_AUTH_KEY = "bhaskar_admin_auth";
+const LEGACY_KEYS = ["bhaskar_site_data_v4", "bhaskar_site_data_v3", "bhaskar_site_data_v2", "bhaskar_site_data"];
 
 // ---------------------------------------------------------------------------
 // Defaults (mirror the static clone exactly)
@@ -385,8 +386,20 @@ export function SiteDataProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     let merged: SiteData | null = null;
     try {
+      // Clean legacy keys to prevent flicker from old v4 data
+      for (const k of LEGACY_KEYS) {
+        try { localStorage.removeItem(k); } catch { /* */ }
+      }
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) merged = mergeStored(raw);
+      if (raw) {
+        merged = mergeStored(raw);
+        // Detect stale v4 shape (stories without slug) → force fresh defaults
+        const stale = (merged.stories as unknown as { slug?: string }[] | undefined)?.some((s) => !s.slug) && merged.stories.length > 0;
+        if (stale) {
+          try { localStorage.removeItem(STORAGE_KEY); } catch { /* */ }
+          merged = null;
+        }
+      }
     } catch {
       /* ignore */
     }
