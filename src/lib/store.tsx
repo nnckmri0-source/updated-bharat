@@ -125,9 +125,21 @@ export type SiteData = {
 /** Ensure asset paths are absolute (/uploads/...) so they work on any route. */
 export function norm(p: string | null | undefined): string | null {
   if (!p) return null;
-  if (p.startsWith("http") || p.startsWith("/") || p.startsWith("data:")) return p;
+  if (p.startsWith("http") || p.startsWith("/") || p.startsWith("data:")) {
+    // Picsum is flaky/blocked in some Indian ISPs — rewrite to reliable placeholder + keep sanity CDN as-is
+    if (p.includes("picsum.photos")) {
+      // Use a stable Sanity CDN image as fallback (guaranteed to exist) with seed hash preserved for variety
+      const seed = p.split("/seed/")[1]?.split("/")[0] ?? "news";
+      // Use placehold.co as ultra-reliable fallback (no CORS issues)
+      return `https://placehold.co/800x500/f47216/ffffff?text=${encodeURIComponent(seed.slice(0, 12))}`;
+    }
+    return p;
+  }
   return "/" + p;
 }
+
+/** Fallback image for any broken <img> — used via onError */
+export const FALLBACK_IMG = "https://placehold.co/800x500/f47216/ffffff?text=Updated+Bharat";
 
 /** Simple URL-ish slug generator for new articles/channels. */
 export function slugify(s: string): string {
@@ -139,11 +151,10 @@ export function slugify(s: string): string {
     .slice(0, 80);
 }
 
-// v5: visual stories (slug/slides IndiaToday) + rich article (description/alt/caption/H1-H3) — bump so old v4 cache is ignored
-// This fixes flicker where static HTML shows new build but old localStorage overwrites to stale data.
-export const STORAGE_KEY = "bhaskar_site_data_v5";
+// v6: picsum → placehold.co fallback for Indian ISP blocks + reliable images — bump to force fresh cache
+export const STORAGE_KEY = "bhaskar_site_data_v6";
 export const ADMIN_AUTH_KEY = "bhaskar_admin_auth";
-const LEGACY_KEYS = ["bhaskar_site_data_v4", "bhaskar_site_data_v3", "bhaskar_site_data_v2", "bhaskar_site_data"];
+const LEGACY_KEYS = ["bhaskar_site_data_v5", "bhaskar_site_data_v4", "bhaskar_site_data_v3", "bhaskar_site_data_v2", "bhaskar_site_data"];
 
 // ---------------------------------------------------------------------------
 // Defaults (mirror the static clone exactly)

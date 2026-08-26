@@ -12,6 +12,18 @@ export default function SiteHeadInject() {
   const { settings } = data;
 
   useEffect(() => {
+    const onImgErr = (e: Event) => {
+      const img = e.target as HTMLImageElement;
+      if (img.tagName === "IMG" && !img.dataset.fallback) {
+        img.dataset.fallback = "1";
+        img.src = "https://placehold.co/800x500/f47216/ffffff?text=Updated+Bharat";
+      }
+    };
+    document.addEventListener("error", onImgErr, true);
+    return () => document.removeEventListener("error", onImgErr, true);
+  }, []);
+
+  useEffect(() => {
     // 1) Google AdSense — header script (auto ads)
     if (settings.adsenseHeaderCode && !document.getElementById("ub-adsense-header")) {
       const holder = document.createElement("div");
