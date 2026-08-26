@@ -78,15 +78,29 @@ export default function HomePage() {
   const byChannel = (slug: string | null) => news.filter((n) => n.channel === slug);
   const getChannelName = (slug: string | null) => channels.find((c) => c.slug === slug)?.name ?? slug ?? "";
 
-  const heroArticle = news.find((n) => n.slug === home.heroMain) ?? news[0];
-  const subFeatured = home.subFeatured
+  // Sorted newest first so Sanity fresh articles always surface even if home config is stale
+  const sorted = [...news].sort((a, b) => {
+    const da = new Date(a.date).getTime() || 0;
+    const db = new Date(b.date).getTime() || 0;
+    return db - da;
+  });
+  const heroArticle = news.find((n) => n.slug === home.heroMain) ?? sorted[0];
+  let subFeatured = home.subFeatured
     .map((s) => news.find((n) => n.slug === s))
-    .filter(Boolean)
-    .slice(0, 3) as typeof news;
-  const latestGrid = home.latestGrid
+    .filter(Boolean) as typeof news;
+  if (subFeatured.length < 3) {
+    const used = new Set([heroArticle?.slug, ...subFeatured.map((n) => n.slug)]);
+    subFeatured = [...subFeatured, ...sorted.filter((n) => !used.has(n.slug))].slice(0, 3);
+  }
+  let latestGrid = home.latestGrid
     .map((s) => news.find((n) => n.slug === s))
-    .filter(Boolean)
-    .slice(0, 6) as typeof news;
+    .filter(Boolean) as typeof news;
+  if (latestGrid.length < 6) {
+    const used = new Set([heroArticle?.slug, ...subFeatured.map((n) => n.slug), ...latestGrid.map((n) => n.slug)]);
+    latestGrid = [...latestGrid, ...sorted.filter((n) => !used.has(n.slug))].slice(0, 6);
+  } else {
+    latestGrid = latestGrid.slice(0, 6);
+  }
 
   return (
     <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>

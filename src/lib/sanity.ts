@@ -229,26 +229,33 @@ export async function fetchSanitySiteData(): Promise<Partial<SiteData> | null> {
       description: String(c.description ?? ""),
     }));
 
-    const storyList: WebStory[] = (stories ?? []).map((s: Record<string, unknown>) => {
-      const slug = (s.slug as string) ?? null;
-      const slidesRaw = (s.slides as Array<Record<string, unknown>>) ?? [];
-      const slides = slidesRaw.map((sl) => ({
-        image: sanityImg(sl.image as string, 800),
-        title: (sl.title as string) ?? null,
-        caption: (sl.caption as string) ?? null,
-        alt: (sl.alt as string) ?? (sl.imageAlt as string) ?? null,
-      }));
-      return {
-        id: String(s.id ?? `story-${Math.random().toString(36).slice(2, 8)}`),
-        slug,
-        category: (s.category as string) ?? null,
-        description: (s.description as string) ?? null,
-        title: String(s.title ?? "Web Story"),
-        url: slug ? `/visualstories/${slug}` : (s.link as string) && (s.link as string) !== "#" ? (s.link as string) : "/web-stories",
-        image: sanityImg(s.image as string, 400),
-        slides: slides.length ? slides : undefined,
-      };
-    });
+    const storyList: WebStory[] = (stories ?? [])
+      .map((s: Record<string, unknown>) => {
+        const slug = (s.slug as string) ?? null;
+        const slidesRaw = (s.slides as Array<Record<string, unknown>>) ?? [];
+        const slides = slidesRaw
+          .map((sl) => ({
+            image: sanityImg(sl.image as string, 800),
+            title: (sl.title as string) ?? null,
+            caption: (sl.caption as string) ?? null,
+            alt: (sl.alt as string) ?? (sl.imageAlt as string) ?? null,
+          }))
+          .filter((sl) => !!sl.image);
+        const img = sanityImg(s.image as string, 400);
+        // Only keep stories that have a slug and a valid cover image — old docs without slug/image are ignored
+        if (!slug || !img) return null as unknown as WebStory;
+        return {
+          id: String(s.id ?? `story-${Math.random().toString(36).slice(2, 8)}`),
+          slug,
+          category: (s.category as string) ?? null,
+          description: (s.description as string) ?? null,
+          title: String(s.title ?? "Web Story"),
+          url: `/visualstories/${slug}`,
+          image: img,
+          slides: slides.length ? slides : undefined,
+        };
+      })
+      .filter(Boolean) as WebStory[];
 
     const editionList: EPaperEdition[] = (editions ?? []).map((e: Record<string, unknown>) => ({
       name: String(e.name ?? "Edition"),
