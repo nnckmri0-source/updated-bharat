@@ -126,12 +126,10 @@ export type SiteData = {
 export function norm(p: string | null | undefined): string | null {
   if (!p) return null;
   if (p.startsWith("http") || p.startsWith("/") || p.startsWith("data:")) {
-    // Picsum is flaky/blocked in some Indian ISPs — rewrite to reliable placeholder + keep sanity CDN as-is
     if (p.includes("picsum.photos")) {
-      // Use a stable Sanity CDN image as fallback (guaranteed to exist) with seed hash preserved for variety
-      const seed = p.split("/seed/")[1]?.split("/")[0] ?? "news";
-      // Use placehold.co as ultra-reliable fallback (no CORS issues)
-      return `https://placehold.co/800x500/f47216/ffffff?text=${encodeURIComponent(seed.slice(0, 12))}`;
+      // picsum blocked on some ISPs — use reliable placehold with short text (avoid truncation on 76px story thumbs)
+      if (p.includes("/400/500") || p.includes("story-")) return "https://placehold.co/400x500/f47216/ffffff?text=Story";
+      return "https://placehold.co/800x500/f47216/ffffff?text=Updated+Bharat";
     }
     return p;
   }
@@ -151,10 +149,10 @@ export function slugify(s: string): string {
     .slice(0, 80);
 }
 
-// v6: picsum → placehold.co fallback for Indian ISP blocks + reliable images — bump to force fresh cache
-export const STORAGE_KEY = "bhaskar_site_data_v6";
+// v7: sanity null-image → keep local placehold + formatted dates + reliable story images
+export const STORAGE_KEY = "bhaskar_site_data_v7";
 export const ADMIN_AUTH_KEY = "bhaskar_admin_auth";
-const LEGACY_KEYS = ["bhaskar_site_data_v5", "bhaskar_site_data_v4", "bhaskar_site_data_v3", "bhaskar_site_data_v2", "bhaskar_site_data"];
+const LEGACY_KEYS = ["bhaskar_site_data_v6", "bhaskar_site_data_v5", "bhaskar_site_data_v4", "bhaskar_site_data_v3", "bhaskar_site_data_v2", "bhaskar_site_data"];
 
 // ---------------------------------------------------------------------------
 // Defaults (mirror the static clone exactly)
@@ -317,9 +315,20 @@ function nonEmpty<T extends Record<string, unknown>>(o: T | undefined): Partial<
  * instead of being wiped by the Sanity refresh. Settings keep admin/localStorage
  * values — Sanity only fills EMPTY fields and NEVER overrides adminPassword.
  */
-function mergeBySlug<T extends { slug: string }>(sanity: T[], local: T[]): T[] {
-  const seen = new Set(sanity.map((x) => x.slug));
-  return [...sanity, ...local.filter((x) => !seen.has(x.slug))];
+function mergeBySlug<T extends { slug: string; image?: string | null; description?: string | null }>(sanity: T[], local: T[]): T[] {
+  const localMap = new Map(local.map((x) => [x.slug, x] as const));
+  const patched = sanity.map((s) => {
+    const l = localMap.get(s.slug);
+    if (l) {
+      if (!s.image && l.image) (s as unknown as Record<string, unknown>).image = l.image;
+      if (!(s as unknown as Record<string, unknown>).description && (l as unknown as Record<string, unknown>).description) (s as unknown as Record<string, unknown>).description = (l as unknown as Record<string, unknown>).description;
+      // keep title/channelName if sanity missing
+      if (!(s as unknown as Record<string, unknown>).title && (l as unknown as Record<string, unknown>).title) (s as unknown as Record<string, unknown>).title = (l as unknown as Record<string, unknown>).title;
+    }
+    return s;
+  });
+  const seen = new Set(patched.map((x) => x.slug));
+  return [...patched, ...local.filter((x) => !seen.has(x.slug))];
 }
 
 /** Stories dedupe by id AND title (Sanity seeds use different ids than defaults). */

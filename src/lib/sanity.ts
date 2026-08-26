@@ -190,6 +190,16 @@ const QUERIES = {
   channelSlugs: `*[_type == "channel"] { "slug": slug.current }`,
 };
 
+function fmtDate(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+  } catch {
+    return iso;
+  }
+}
+
 /** Fetch everything the frontend renders. Returns null when Sanity is empty/unreachable. */
 export async function fetchSanitySiteData(): Promise<Partial<SiteData> | null> {
   try {
@@ -215,7 +225,7 @@ export async function fetchSanitySiteData(): Promise<Partial<SiteData> | null> {
       description: String((a.description as string) ?? ""),
       channel: (a.channel as string) ?? null,
       channelName: (a.channelName as string) ?? null,
-      date: String(a.date ?? ""),
+      date: fmtDate(String(a.date ?? "")),
       content: portableTextToHtml(a.body as unknown[]) || portableTextToContent(a.body as unknown[]),
       image: sanityImg(a.image as string),
       imageAlt: (a.imageAlt as string) ?? null,
