@@ -76,6 +76,7 @@ export type SiteSettings = {
   logo: string;
   footerAbout: string;
   copyright: string;
+  adminUsername: string;
   adminPassword: string;
   liveUrl: string;
   social: { facebook: string; twitter: string; instagram: string; youtube: string; whatsapp: string };
@@ -192,6 +193,7 @@ export function buildDefaults(): SiteData {
       logo: norm(defaultSiteConfig.logo) ?? "",
       footerAbout: "Get the latest news delivered straight to your inbox.",
       copyright: "All rights reserved.",
+      adminUsername: "admin",
       adminPassword: "admin123",
       liveUrl: "",
       social: { ...defaultSiteConfig.social },
@@ -350,6 +352,8 @@ function mergeSanity(cur: SiteData, s: Partial<SiteData>): SiteData {
     footerAbout: curS.footerAbout || sanS.footerAbout || curS.footerAbout,
     copyright: curS.copyright || sanS.copyright || curS.copyright,
     liveUrl: curS.liveUrl || sanS.liveUrl || "",
+    // Login credentials stay on this device only — never synced to/from Sanity.
+    adminUsername: curS.adminUsername || "admin",
     adminPassword: curS.adminPassword,
     social: {
       facebook: curS.social.facebook || sanS.social?.facebook || "",

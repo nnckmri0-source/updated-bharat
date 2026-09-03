@@ -305,6 +305,7 @@ export async function fetchSanitySiteData(): Promise<Partial<SiteData> | null> {
       logo: sanityImg(s.logo as string, 200) ?? "",
       footerAbout: String(s.footerAbout ?? ""),
       copyright: String(s.copyright ?? ""),
+      adminUsername: "", // login credentials never come from Sanity (local device only)
       adminPassword: "",
       liveUrl: String(s.liveUrl ?? ""),
       social: {

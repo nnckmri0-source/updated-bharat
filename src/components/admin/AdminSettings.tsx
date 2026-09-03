@@ -192,6 +192,7 @@ export function AdminSettings() {
 export function AdminPassword() {
   const { data, update } = useSiteData();
   const [current, setCurrent] = useState("");
+  const [nextId, setNextId] = useState(data.settings.adminUsername);
   const [next, setNext] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -200,29 +201,41 @@ export function AdminPassword() {
       setMsg({ ok: false, text: "Current password is incorrect." });
       return;
     }
-    if (next.trim().length < 4) {
+    if (!nextId.trim()) {
+      setMsg({ ok: false, text: "Admin ID cannot be empty." });
+      return;
+    }
+    if (next.trim() && next.trim().length < 4) {
       setMsg({ ok: false, text: "New password must be at least 4 characters." });
       return;
     }
-    update((d) => ({ ...d, settings: { ...d.settings, adminPassword: next.trim() } }));
+    update((d) => ({
+      ...d,
+      settings: {
+        ...d.settings,
+        adminUsername: nextId.trim(),
+        adminPassword: next.trim() || d.settings.adminPassword,
+      },
+    }));
     setCurrent("");
     setNext("");
-    setMsg({ ok: true, text: "Password updated ✓" });
+    setMsg({ ok: true, text: "Admin login updated ✓ — use the new ID/password next time." });
   };
 
   return (
     <Card
-      title="Admin Password"
-      subtitle="Change your admin login password"
+      title="Admin Login (ID + Password)"
+      subtitle="Only this ID + password can open the admin panel"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
-        <TInput label="Current Password" value={current} onChange={setCurrent} type="password" />
-        <TInput label="New Password" value={next} onChange={setNext} type="password" />
+        <TInput label="Admin ID" value={nextId} onChange={setNextId} placeholder="admin" />
+        <TInput label="Current Password (required to save)" value={current} onChange={setCurrent} type="password" />
+        <TInput label="New Password (leave blank to keep)" value={next} onChange={setNext} type="password" />
       </div>
       {msg && <p className={`mt-3 text-[13px] font-medium ${msg.ok ? "text-green-600" : "text-red-500"}`}>{msg.text}</p>}
       <div className="mt-4">
-        <Btn onClick={change} disabled={!current || !next}>
-          Update Password
+        <Btn onClick={change} disabled={!current || !nextId.trim()}>
+          Update Login
         </Btn>
       </div>
     </Card>

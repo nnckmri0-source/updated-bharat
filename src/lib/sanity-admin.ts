@@ -284,6 +284,10 @@ export async function upsertSanityArticle(article: NewsArticle, channelSlug?: st
     } else {
       body = contentToPortableText(raw);
     }
+    // Keep the admin's date (so "Apr 23, 2026" survives the Sanity round-trip);
+    // only fall back to now when it isn't a real date.
+    const parsed = new Date(article.date);
+    const isoDate = !article.date || article.date === "Today" || isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
     await client().createOrReplace({
       _id: `article-${article.slug}`,
       _type: "article",
@@ -291,7 +295,7 @@ export async function upsertSanityArticle(article: NewsArticle, channelSlug?: st
       slug: { _type: "slug", current: article.slug },
       channel,
       description: article.description ?? "",
-      date: new Date().toISOString(),
+      date: isoDate,
       coverImage: cover,
       body,
       published: true,

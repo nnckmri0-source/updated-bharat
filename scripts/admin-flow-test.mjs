@@ -101,16 +101,18 @@ async function main() {
     check("Admin login gate shows", gateText);
 
     await evaluate(`(() => {
-      const input = document.querySelector('input[type="password"]');
-      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-      setter.call(input, "admin123");
-      input.dispatchEvent(new Event("input", { bubbles: true }));
+      const setVal = (el, val) => {
+        Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set.call(el, val);
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+      };
+      setVal(document.querySelector('input[placeholder="Admin ID"]'), "admin");
+      setVal(document.querySelector('input[type="password"]'), "admin123");
       document.querySelector("form button[type=submit]").click();
     })()`);
     await sleepMs(1500);
 
     const dashboard = await evaluate(`document.body.innerText.includes("Quick Actions")`);
-    check("Login with admin123 → dashboard loads", dashboard);
+    check("Login with admin/admin123 → dashboard loads", dashboard);
 
     // --- 2. settings tab — change site name ---
     await evaluate(`(() => {

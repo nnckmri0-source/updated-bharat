@@ -41,7 +41,7 @@ const TABS = [
   { id: "epaper", label: "E-Paper", icon: BookOpen },
   { id: "settings", label: "Site Settings", icon: Settings },
   { id: "footer", label: "Footer", icon: Link2 },
-  { id: "password", label: "Admin Password", icon: KeyRound },
+  { id: "password", label: "Admin Login", icon: KeyRound },
 ];
 
 export default function AdminPage() {
@@ -50,6 +50,7 @@ export default function AdminPage() {
   // render match (no hydration mismatch). The saved session is restored in an
   // effect after mount — one frame later, no flicker on the login screen.
   const [authed, setAuthed] = useState(false);
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const [tab, setTab] = useState("dashboard");
@@ -67,7 +68,8 @@ export default function AdminPage() {
 
   const login = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === data.settings.adminPassword) {
+    // ONLY this ID + password can log in (both checked, exact match).
+    if (username.trim() === data.settings.adminUsername && password === data.settings.adminPassword) {
       try {
         localStorage.setItem(ADMIN_AUTH_KEY, "1");
       } catch {
@@ -104,6 +106,18 @@ export default function AdminPage() {
             </div>
             <form onSubmit={login} className="space-y-3">
               <input
+                type="text"
+                value={username}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  setError(false);
+                }}
+                placeholder="Admin ID"
+                autoFocus
+                autoComplete="username"
+                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+              />
+              <input
                 type="password"
                 value={password}
                 onChange={(e) => {
@@ -111,10 +125,10 @@ export default function AdminPage() {
                   setError(false);
                 }}
                 placeholder="Admin password"
-                autoFocus
+                autoComplete="current-password"
                 className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
               />
-              {error && <p className="text-[12px] font-medium text-red-500">Wrong password — try again.</p>}
+              {error && <p className="text-[12px] font-medium text-red-500">Wrong ID or password — try again.</p>}
               <button type="submit" className="w-full rounded-xl bg-orange-500 py-2.5 text-sm font-bold text-white transition hover:bg-orange-600">
                 Login to Admin
               </button>
@@ -173,7 +187,7 @@ export default function AdminPage() {
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <h1 className="truncate text-[15px] font-extrabold text-slate-800 md:text-[17px]">{TABS.find((t) => t.id === tab)?.label}</h1>
-              <p className="hidden text-[11px] text-slate-400 sm:block">Changes save to Sanity — live for all visitors (connect a token in Site Settings)</p>
+              <p className="hidden text-[11px] text-slate-400 sm:block">News, channels, stories, ticker, polls & e-paper sync to Sanity — live for all visitors. Homepage layout & footer save on this device.</p>
             </div>
             <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-0.5 text-[10px] font-bold text-green-700 md:px-3 md:py-1 md:text-[11px]">● Live</span>
           </div>
