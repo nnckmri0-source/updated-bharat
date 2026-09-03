@@ -193,8 +193,8 @@ export function buildDefaults(): SiteData {
       logo: norm(defaultSiteConfig.logo) ?? "",
       footerAbout: "Get the latest news delivered straight to your inbox.",
       copyright: "All rights reserved.",
-      adminUsername: "admin",
-      adminPassword: "admin123",
+      adminUsername: "bharat.admin",
+      adminPassword: "UB#2026$Bharat!Admin",
       liveUrl: "",
       social: { ...defaultSiteConfig.social },
       adSlots: { ...defaultSiteConfig.adSlots },
@@ -283,12 +283,19 @@ function mergeStored(raw: string | null): SiteData {
   try {
     const p = JSON.parse(raw);
     if (!p || typeof p !== "object") return d;
+    // Credential migration: browsers holding the previous default login
+    // (admin/admin123) move to the new complex defaults automatically.
+    // A login the owner changed manually in the panel is left untouched.
+    const storedUser = p.settings?.adminUsername as string | undefined;
+    const storedPass = p.settings?.adminPassword as string | undefined;
     return {
       ...d,
       ...p,
       settings: {
         ...d.settings,
         ...(p.settings ?? {}),
+        adminUsername: !storedUser || storedUser === "admin" ? d.settings.adminUsername : storedUser,
+        adminPassword: !storedPass || storedPass === "admin123" ? d.settings.adminPassword : storedPass,
         social: { ...d.settings.social, ...(p.settings?.social ?? {}) },
         adSlots: { ...d.settings.adSlots, ...(p.settings?.adSlots ?? {}) },
       },

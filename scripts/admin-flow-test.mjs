@@ -105,14 +105,14 @@ async function main() {
         Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set.call(el, val);
         el.dispatchEvent(new Event("input", { bubbles: true }));
       };
-      setVal(document.querySelector('input[placeholder="Admin ID"]'), "admin");
-      setVal(document.querySelector('input[type="password"]'), "admin123");
+      setVal(document.querySelector('input[placeholder="Admin ID"]'), "bharat.admin");
+      setVal(document.querySelector('input[type="password"]'), "UB#2026$Bharat!Admin");
       document.querySelector("form button[type=submit]").click();
     })()`);
     await sleepMs(1500);
 
     const dashboard = await evaluate(`document.body.innerText.includes("Quick Actions")`);
-    check("Login with admin/admin123 → dashboard loads", dashboard);
+    check("Login with complex ID/password → dashboard loads", dashboard);
 
     // --- 2. settings tab — change site name ---
     await evaluate(`(() => {
