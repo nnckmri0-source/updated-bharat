@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Pencil, Plus, Trash2, ArrowLeft, Image as ImgIcon } from "lucide-react";
 import { useSiteData, norm, slugify, type WebStory, type WebStorySlide } from "@/lib/store";
-import { upsertSanityStory, deleteSanityStory } from "@/lib/sanity-admin";
+import { upsertSanityStory, deleteSanityStory, notifySync } from "@/lib/sanity-admin";
 import { Card, Btn, TInput, TArea, ImageInput, EmptyState } from "./ui";
 
 export default function AdminStories() {
@@ -48,14 +48,14 @@ export default function AdminStories() {
     } else {
       update((d) => ({ ...d, stories: [...d.stories, story] }));
     }
-    void upsertSanityStory(story);
+    notifySync(upsertSanityStory(story), "Story");
     setFormOpen(false);
   };
 
   const remove = (id: string) => {
     if (!confirm("Delete this web story?")) return;
     update((d) => ({ ...d, stories: d.stories.filter((s) => s.id !== id) }));
-    void deleteSanityStory(id);
+    notifySync(deleteSanityStory(id), "Story delete");
   };
 
   if (formOpen) {

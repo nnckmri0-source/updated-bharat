@@ -43,6 +43,20 @@ export function setSanityToken(t: string): void {
   }
 }
 
+/**
+ * Fire-and-forget Sanity sync with failure feedback.
+ * Admin saves ALWAYS persist to localStorage first (instant UI), this only
+ * reports when the background Sanity push failed so the editor knows the
+ * change is local-only (e.g. offline or expired token).
+ */
+export function notifySync(p: Promise<boolean>, what = "Sanity"): void {
+  p.then((ok) => {
+    if (!ok) alert(`${what} sync failed — saved on this device only. Check internet / Settings → Sanity Sync token.`);
+  }).catch(() => {
+    alert(`${what} sync failed — saved on this device only. Check internet / Settings → Sanity Sync token.`);
+  });
+}
+
 function client() {
   return createClient({
     projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "dz286cjq",

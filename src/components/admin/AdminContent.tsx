@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Save, RotateCcw } from "lucide-react";
 import { useSiteData } from "@/lib/store";
-import { syncSanityTicker } from "@/lib/sanity-admin";
+import { syncSanityTicker, notifySync } from "@/lib/sanity-admin";
 import { Card, Btn, TArea } from "./ui";
 
 const toLines = (arr: string[]) => arr.join("\n");
@@ -19,7 +19,7 @@ export default function AdminContent() {
     const ticker = fromLines(tickerText);
     const trending = fromLines(trendingText);
     update((d) => ({ ...d, ticker, trending }));
-    void syncSanityTicker(ticker, trending);
+    notifySync(syncSanityTicker(ticker, trending), "Ticker");
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
   };

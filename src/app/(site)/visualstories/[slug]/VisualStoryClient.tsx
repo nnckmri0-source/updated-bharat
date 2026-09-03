@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useSiteData } from "@/lib/store";
 import VisualStoryViewer from "@/components/VisualStoryViewer";
 import { FileQuestion } from "lucide-react";
-import { t } from "@/lib/i18n";
 
 export default function VisualStoryClient({ slug }: { slug: string }) {
   const { data } = useSiteData();

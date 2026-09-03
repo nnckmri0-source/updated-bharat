@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Pencil, Plus, Trash2, ArrowLeft, Filter } from "lucide-react";
 import { useSiteData, slugify, norm, type NewsArticle } from "@/lib/store";
-import { upsertSanityArticle, deleteSanityArticle } from "@/lib/sanity-admin";
+import { upsertSanityArticle, deleteSanityArticle, notifySync } from "@/lib/sanity-admin";
 import { Card, Btn, TInput, TArea, TSelect, ImageInput, EmptyState } from "./ui";
 import RichTextEditor from "./RichTextEditor";
 
@@ -53,15 +53,15 @@ export default function AdminNews() {
     } else {
       update((d) => ({ ...d, news: [article, ...d.news] }));
     }
-    // push to Sanity too (no-op without a token configured)
-    void upsertSanityArticle(article, article.channel);
+    // push to Sanity too (alerts only if the background sync fails)
+    notifySync(upsertSanityArticle(article, article.channel), "Article");
     setFormOpen(false);
   };
 
   const remove = (slug: string) => {
     if (!confirm(`Delete "${slug}" permanently?`)) return;
     update((d) => ({ ...d, news: d.news.filter((n) => n.slug !== slug) }));
-    void deleteSanityArticle(slug);
+    notifySync(deleteSanityArticle(slug), "Article delete");
   };
 
   const channelOptions = [{ value: "", label: "— No channel —" }, ...channels.filter((c) => c.slug !== "0").map((c) => ({ value: c.slug, label: c.name }))];

@@ -16,7 +16,10 @@ export default function SiteHeadInject() {
       const img = e.target as HTMLImageElement;
       if (img.tagName === "IMG" && !img.dataset.fallback) {
         img.dataset.fallback = "1";
-        img.src = "https://placehold.co/800x500/f47216/ffffff?text=Updated+Bharat";
+        // Local SVG fallback — offline-safe, never blocked, keeps layout intact.
+        // Portrait-ish slots (stories) get the story placeholder.
+        const tall = img.clientHeight > img.clientWidth * 1.1;
+        img.src = tall ? "/placeholders/story-400x500.svg" : "/placeholders/news-800x500.svg";
       }
     };
     document.addEventListener("error", onImgErr, true);

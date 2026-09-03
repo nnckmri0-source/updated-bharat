@@ -77,6 +77,21 @@ export default function NewsClient({ slug }: { slug: string }) {
   };
 
   const article = news.find((n) => n.slug === slug);
+
+  const shareThis = async () => {
+    if (!article) return;
+    const base = process.env.NEXT_PUBLIC_SITE_URL ?? (typeof window !== "undefined" ? window.location.origin : "https://bhaskar.naws.in");
+    const url = `${base}/news/${article.slug}`;
+    try {
+      if (navigator.share) await navigator.share({ title: article.title, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        alert("Link copied!");
+      }
+    } catch {
+      /* user cancelled share — ignore */
+    }
+  };
   if (!article) {
     return (
       <div className="widget-box" style={{ padding: 60, textAlign: "center" }}>
@@ -122,7 +137,7 @@ export default function NewsClient({ slug }: { slug: string }) {
                 <>
                   <li style={{ color: "var(--text-light)" }}>/</li>
                   <li>
-                    <a href={`/channel/${channel.slug}`} style={{ color: "#7209B7", textDecoration: "none" }}>{channel.name}</a>
+                    <Link href={`/channel/${channel.slug}`} style={{ color: "#7209B7", textDecoration: "none" }}>{channel.name}</Link>
                   </li>
                 </>
               )}
@@ -180,7 +195,7 @@ export default function NewsClient({ slug }: { slug: string }) {
               >
                 A+
               </button>
-              <button type="button" aria-label="Share" style={{ width: 34, height: 34, borderRadius: "50%", border: "1px solid var(--border)", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <button type="button" aria-label="Share" title="Share this story" onClick={shareThis} style={{ width: 34, height: 34, borderRadius: "50%", border: "1px solid var(--border)", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                 <Share2 size={14} />
               </button>
             </div>
@@ -233,7 +248,7 @@ export default function NewsClient({ slug }: { slug: string }) {
                     )}
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <h6 style={{ margin: 0, fontWeight: 700, fontSize: "0.85rem", lineHeight: 1.2 }}>
-                        <a href={`/news/${r.slug}`} style={{ color: "var(--text)", textDecoration: "none" }}>{r.title}</a>
+                        <Link href={`/news/${r.slug}`} style={{ color: "var(--text)", textDecoration: "none" }}>{r.title}</Link>
                       </h6>
                       <span style={{ color: "var(--text-muted)", fontSize: "0.7rem" }}>
                         <Clock size={10} style={{ display: "inline", marginRight: 3 }} /> {r.date}

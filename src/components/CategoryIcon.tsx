@@ -33,7 +33,6 @@ import {
   HeartPulse,
   Earth,
   BookOpen,
-  TrendingUp,
   Home,
   Apple,
 } from "lucide-react";

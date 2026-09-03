@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Layers } from "lucide-react";
+import { Layers } from "lucide-react";
 import { useSiteData } from "@/lib/store";
-import { useLang, t } from "@/lib/i18n";
+import { useLang } from "@/lib/i18n";
 
 export default function VisualStoriesPage() {
   useLang();

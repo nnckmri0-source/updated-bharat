@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Plus, Trash2, KeyRound, Database } from "lucide-react";
 import { useSiteData, type FooterLink } from "@/lib/store";
-import { getSanityToken, setSanityToken, testSanityConnection, syncSanitySettings } from "@/lib/sanity-admin";
+import { getSanityToken, setSanityToken, testSanityConnection, syncSanitySettings, notifySync } from "@/lib/sanity-admin";
 import { Card, Btn, TInput, TArea, ImageInput, SaveBar } from "./ui";
 
 export function AdminSettings() {
@@ -52,8 +52,8 @@ export function AdminSettings() {
           adsenseSidebarCode: form.adsenseSidebarCode.trim(),
         },
       };
-      // push settings to Sanity too (no-op without a token)
-      void syncSanitySettings(next.settings);
+      // push settings to Sanity too (alerts only if the background sync fails)
+      notifySync(syncSanitySettings(next.settings), "Settings");
       return next;
     });
     setSaved(true);

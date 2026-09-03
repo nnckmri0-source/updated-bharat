@@ -1,6 +1,4 @@
-import { news } from "@/data/news";
 import { stories as defaultStories } from "@/data/stories";
-import { fetchSanitySlugs } from "@/lib/content-source";
 import { createClient } from "@sanity/client";
 import VisualStoryClient from "./VisualStoryClient";
 

@@ -125,19 +125,17 @@ export type SiteData = {
 /** Ensure asset paths are absolute (/uploads/...) so they work on any route. */
 export function norm(p: string | null | undefined): string | null {
   if (!p) return null;
-  if (p.startsWith("http") || p.startsWith("/") || p.startsWith("data:")) {
-    if (p.includes("picsum.photos")) {
-      // picsum blocked on some ISPs — use reliable placehold with short text (avoid truncation on 76px story thumbs)
-      if (p.includes("/400/500") || p.includes("story-")) return "https://placehold.co/400x500/f47216/ffffff?text=Story";
-      return "https://placehold.co/800x500/f47216/ffffff?text=Updated+Bharat";
-    }
-    return p;
-  }
+  // Keep remote photos (picsum/Sanity CDN) as-is — they render real pictures.
+  // If a remote host is blocked, the global <img> error handler in
+  // SiteHeadInject swaps in the local /placeholders/*.svg fallback (offline-safe).
+  if (p.startsWith("http") || p.startsWith("/") || p.startsWith("data:")) return p;
   return "/" + p;
 }
 
-/** Fallback image for any broken <img> — used via onError */
-export const FALLBACK_IMG = "https://placehold.co/800x500/f47216/ffffff?text=Updated+Bharat";
+/** Local offline-safe fallbacks (served from /public, always available in production). */
+export const FALLBACK_IMG = "/placeholders/news-800x500.svg";
+export const FALLBACK_STORY_IMG = "/placeholders/story-400x500.svg";
+export const FALLBACK_EPAPER_IMG = "/placeholders/epaper-600x800.svg";
 
 /** Simple URL-ish slug generator for new articles/channels. */
 export function slugify(s: string): string {
@@ -149,10 +147,11 @@ export function slugify(s: string): string {
     .slice(0, 80);
 }
 
-// v7: sanity null-image → keep local placehold + formatted dates + reliable story images
-export const STORAGE_KEY = "bhaskar_site_data_v7";
+// v8: real remote photos kept (no placehold rewrite) + local SVG fallbacks.
+// Bumping clears the stale v7 cache that pinned every image to placehold.co orange boxes.
+export const STORAGE_KEY = "bhaskar_site_data_v8";
 export const ADMIN_AUTH_KEY = "bhaskar_admin_auth";
-const LEGACY_KEYS = ["bhaskar_site_data_v6", "bhaskar_site_data_v5", "bhaskar_site_data_v4", "bhaskar_site_data_v3", "bhaskar_site_data_v2", "bhaskar_site_data"];
+const LEGACY_KEYS = ["bhaskar_site_data_v7", "bhaskar_site_data_v6", "bhaskar_site_data_v5", "bhaskar_site_data_v4", "bhaskar_site_data_v3", "bhaskar_site_data_v2", "bhaskar_site_data"];
 
 // ---------------------------------------------------------------------------
 // Defaults (mirror the static clone exactly)
@@ -183,7 +182,7 @@ export function buildDefaults(): SiteData {
       {
         name: "Updated Bharat",
         date: "Latest Edition",
-        cover: "https://placehold.co/600x800/f47216/ffffff?text=E-Paper",
+        cover: "/placeholders/epaper-600x800.svg",
         pdf: "",
       },
     ],

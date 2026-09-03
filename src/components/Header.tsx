@@ -2,13 +2,13 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Home,
   Search,
   Newspaper,
   Menu,
   X,
-  List,
   Flame,
   Radio,
   PlayCircle,
@@ -55,9 +55,14 @@ export default function Header() {
   );
   const stateChannels = channels.filter((c) => ["madhya-pradesh", "uttar-pradesh", "rajasthan", "bihar"].includes(c.slug));
 
+  const router = useRouter();
   const runSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
+    // SPA navigation (no full-page reload, keeps store + scroll state)
+    if (query.trim()) {
+      setSearchOpen(false);
+      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+    }
   };
 
   return (
