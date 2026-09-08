@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Pencil, Plus, Trash2, ArrowLeft, List } from "lucide-react";
 import { useSiteData, slugify, norm, type Channel } from "@/lib/store";
-import { upsertSanityChannel, deleteSanityChannel, notifySync } from "@/lib/sanity-admin";
 import { Card, Btn, TInput, ImageInput, EmptyState } from "./ui";
 
 export default function AdminChannels() {
@@ -37,7 +36,6 @@ export default function AdminChannels() {
     } else {
       update((d) => ({ ...d, channels: [...d.channels.filter((c) => c.slug !== "0"), channel, d.channels.find((c) => c.slug === "0")].filter(Boolean) as Channel[] }));
     }
-    notifySync(upsertSanityChannel(channel), "Channel");
     setFormOpen(false);
   };
 
@@ -51,7 +49,6 @@ export default function AdminChannels() {
       home: { ...d.home, widgets: d.home.widgets.filter((w) => w.slug !== slug) },
       footer: { ...d.footer, categorySlugs: d.footer.categorySlugs.filter((s) => s !== slug) },
     }));
-    notifySync(deleteSanityChannel(slug), "Channel delete");
   };
 
   if (formOpen) {

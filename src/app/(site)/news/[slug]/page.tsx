@@ -1,22 +1,8 @@
 import { news } from "@/data/news";
-import { fetchSanitySlugs } from "@/lib/content-source";
 import NewsClient from "./NewsClient";
 
 export async function generateStaticParams() {
-  const local = news.map((n) => ({ slug: n.slug }));
-  try {
-    const sanity = await fetchSanitySlugs();
-    const seen = new Set(local.map((l) => l.slug));
-    for (const slug of sanity) {
-      if (!seen.has(slug)) {
-        local.push({ slug });
-        seen.add(slug);
-      }
-    }
-  } catch {
-    /* offline build — local slugs only */
-  }
-  return local;
+  return news.map((n) => ({ slug: n.slug }));
 }
 
 export function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {

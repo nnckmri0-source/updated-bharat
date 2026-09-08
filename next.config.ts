@@ -1,11 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Static export for Netlify drag-and-drop deploy (outputs to ./out).
-  // Content lives in localStorage via admin, so no server needed.
-  output: "export",
-  // Required with output:export — next/image has no optimizer server here.
-  // (The site uses plain <img>, this just prevents cryptic build errors later.)
+  // Server backend (API routes + Firebase Admin SDK) — no more static export.
+  // Deploy to any Node host (Vercel, VPS, `npm run build && npm run start`).
+  // next/image has no optimizer in the old static setup; keep it unoptimized —
+  // the site uses plain <img> tags everywhere.
   images: { unoptimized: true },
 };
 

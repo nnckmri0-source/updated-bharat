@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, KeyRound, Database } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useSiteData, type FooterLink } from "@/lib/store";
-import { getSanityToken, setSanityToken, testSanityConnection, syncSanitySettings, notifySync } from "@/lib/sanity-admin";
 import { Card, Btn, TInput, TArea, ImageInput, SaveBar } from "./ui";
 
 export function AdminSettings() {
-  const { data, update } = useSiteData();
+  const { data, update, backendReady } = useSiteData();
   const s = data.settings;
   const [form, setForm] = useState({
     name: s.name,
@@ -27,9 +26,6 @@ export function AdminSettings() {
     adsenseSidebarCode: s.adsenseSidebarCode ?? "",
   });
   const [saved, setSaved] = useState(false);
-  const [sanityToken, setToken] = useState(getSanityToken());
-  const [tokenStatus, setTokenStatus] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [tokenBusy, setTokenBusy] = useState(false);
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -52,21 +48,10 @@ export function AdminSettings() {
           adsenseSidebarCode: form.adsenseSidebarCode.trim(),
         },
       };
-      // push settings to Sanity too (alerts only if the background sync fails)
-      notifySync(syncSanitySettings(next.settings), "Settings");
       return next;
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
-  };
-
-  const saveToken = async () => {
-    setTokenBusy(true);
-    setTokenStatus(null);
-    const res = await testSanityConnection(sanityToken.trim());
-    setTokenStatus({ ok: res.ok, msg: res.message });
-    if (res.ok) setSanityToken(sanityToken.trim());
-    setTokenBusy(false);
   };
 
   return (
@@ -84,34 +69,13 @@ export function AdminSettings() {
         </div>
       </Card>
 
-      <Card title="Sanity Sync" subtitle="Every edit here syncs to Sanity automatically — all visitors see your changes without a rebuild.">
-        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-[13px] font-semibold text-green-700">
-          <Database size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
-          Auto-connected ✓ (built-in Editor token)
-          <span className="block text-[11px] font-normal text-green-600 mt-0.5">
-            News / Channels / Stories / Polls / Ticker / E-Paper / Settings → written to Sanity on every save.
-            Visitors see changes within ~30-60s (CDN cache), no rebuild needed.
-          </span>
-        </div>
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <TInput
-            label="Custom Token (optional)"
-            value={sanityToken}
-            onChange={(v) => setToken(v)}
-            type="password"
-            placeholder="sk..."
-            hint="Override the built-in token only if you create a new one in Sanity (API → Tokens → Editor)."
-          />
-        </div>
-        <div className="mt-3 flex items-center gap-3">
-          <Btn onClick={saveToken} disabled={!sanityToken.trim() || tokenBusy}>
-            <Database size={13} /> {tokenBusy ? "Testing…" : "Test & Save Token"}
-          </Btn>
-          {tokenStatus && (
-            <span className={`text-[12px] font-semibold ${tokenStatus.ok ? "text-green-600" : "text-red-500"}`}>
-              {tokenStatus.msg}
-            </span>
-          )}
+      <Card title="Backend Sync (Firebase Admin API)" subtitle="Every save here goes live for all visitors in realtime — no rebuild needed.">
+        <div className={`rounded-lg border px-4 py-3 text-[13px] font-semibold ${backendReady ? "border-green-200 bg-green-50 text-green-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+          {backendReady
+            ? "Backend connected ✓ — all saves are pushed to Firebase via the server API instantly. Visitors see changes live, no rebuild needed."
+            : backendReady === false
+              ? "Backend not reachable — saves stay on this device only. Check the server logs and Firebase Admin config (.env.local), then restart."
+              : "Checking backend…"}
         </div>
       </Card>
 

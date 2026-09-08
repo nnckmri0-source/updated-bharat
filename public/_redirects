@@ -1,5 +1,5 @@
-# Client-side fallback for new Sanity content.
-# Static pages (built slugs) take priority (force defaults to false), so only
-# slugs WITHOUT a static page hit these rewrites and render from Sanity live.
-/news/* /news/sanity-fallback.html 200
-/channel/* /channel/sanity-fallback.html 200
+# Live fallback for content published from the admin panel after the last build.
+# Static pages (built slugs) take priority, so only slugs WITHOUT a static page
+# hit these rewrites and render live from Firebase.
+/news/* /news/live.html 200
+/channel/* /channel/live.html 200

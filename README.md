@@ -22,7 +22,7 @@ ka exact match. 91+ articles, har channel mein posts, sab jagah images.
 | Language   | TypeScript |
 | Icons      | lucide-react |
 | Font       | Poppins (next/font) |
-| Data       | Client-side store (`src/lib/store.tsx`) — localStorage + Firebase-ready |
+| Data       | Firebase RTDB + Admin SDK API routes (`src/app/api`) + localStorage fallback |
 | Build      | SSG — 88 static pages + dynamic routes |
 
 ## Run locally
@@ -70,13 +70,12 @@ Admin login/signup hata diya gaya hai — sirf ek password-protected admin panel
 - **Footer** — quick links, tag links, categories
 - Images upload: **Upload** button file select karta hai (base64 saved) ya URL paste karo
 
-**Kaise kaam karta hai:** har change localStorage mein save hota hai aur site par
-**instantly** reflect hota hai (frontend live store se render karta hai). Firebase
-connect karne par `src/lib/store.tsx` ke andar sirf localStorage read/write ko
-Firestore calls se replace karna hoga — baaki app waisa hi chalta hai.
+**Kaise kaam karta hai:** har change localStorage + **Firebase RTDB** (`site` node)
+dono par save hota hai aur site par **instantly** reflect hota hai — admin panel se
+kiya gaya edit sabhi visitors ko live dikhta hai (realtime listener).
 
-> ⚠️ Admin data abhi **isi browser** mein save hota hai. Dusre device/visitors ko
-> wahi data dikhane ke liye Firebase sync chahiye (agla step).
+> Login credentials (admin ID/password) sirf usi device ke localStorage mein rehte
+> hain — cloud se sync/overwrite nahi hote.
 
 ## 🌐 Language — English only
 
@@ -115,41 +114,24 @@ Firestore calls se replace karna hoga — baaki app waisa hi chalta hai.
   - **Sidebar ad code** — right sidebar mein (PC side space fill)
 - Chahiye: approved AdSense account + site added + ad unit codes
 
-## 🗂️ Sanity CMS — CONNECTED ✅
+## 🔥 Firebase Backend — CONNECTED ✅ (Admin SDK + API routes)
 
-Sanity **connect ho gaya hai** — site ab Sanity se content fetch karta hai (browser mein,
-client-side) isliye **admin edits bina rebuild ke dikhte hain**:
+Backend **Firebase Realtime Database + Firebase Admin SDK** hai — Sanity poori tarah hata diya gaya hai. Site ab **server backend** par chalti hai (static export nahi).
 
-- `src/lib/sanity.ts` — Sanity client + GROQ queries + Portable Text → site format mapping
-- `src/lib/store.tsx` — Sanity primary, **localStorage → defaults fallback** (site kabhi blank nahi)
-- `src/lib/sanity-admin.ts` — **admin panel → Sanity write layer** (token localStorage mein)
-- `sanity/schemas/` — article, channel, story, edition, poll, settings, ticker, adSlot
-- News/channel pages build par **Sanity slugs bhi generate karte hain** (naye articles ko pages milte hain)
-- `.env.local` — `NEXT_PUBLIC_SANITY_PROJECT_ID=dz286cjq`, `NEXT_PUBLIC_SANITY_DATASET=production`, `SANITY_API_TOKEN` (seed ke liye)
+- `src/lib/firebase-admin.ts` — Admin SDK (service account se) — **sirf server par**
+- `src/app/api/site` — GET (public read) / PUT + PATCH (admin session cookie zaroori)
+- `src/app/api/admin/login` — login verify (credentials Firebase se), HttpOnly signed cookie
+- `src/lib/store.tsx` — client: GET se hydrate + RTDB **live listener** (admin edits realtime sabko dikhte hain)
+- Admin panel ke har save par: localStorage + `PUT /api/site` (server Admin SDK se RTDB mein likhta hai)
+- Firebase config na ho / API down ho to site localStorage fallback par chalti hai (kabhi blank nahi)
+- **Security**: RTDB rules = public read-only, writes sirf Admin SDK se (server). Anon writes 401.
+- `.env.local` — `NEXT_PUBLIC_FIREBASE_*` (public web config) + `FIREBASE_SERVICE_ACCOUNT_PATH` + `FIREBASE_DATABASE_URL` + `ADMIN_SESSION_SECRET`
 
-**Admin panel ab Sanity se sync hai (Option A):**
-- Admin → **Site Settings → Sanity Sync** mein token paste karo (ek baar, localStorage mein)
-- Phir News / Channels / Stories / Polls / Ticker / E-Paper / Settings ke edits **Sanity mein save** hote hain → **sab visitors ko live dikhte hain** (CDN ~30-60s cache delay)
-- Bina token ke panel localStorage-only mode mein chalta hai (sirf usi browser mein)
+**Files**: `firebase-service-account.json` (gitignored — kabhi commit mat karna), `firebase.json`, `database.rules.json`, `.firebaserc`
 
-**Remaining setup (tumhare account se):**
+**Deploy**: `npm run build && npm run start` — kisi bhi Node host par (Vercel/Render/VPS). Service account JSON hosting env vars mein daalo (`FIREBASE_SERVICE_ACCOUNT` inline base64 bhi chalta hai).
 
-1. **CORS origins** — Sanity → API → CORS origins mein apna domain + `http://localhost:3000` add karo
-   (browser se fetch ke liye zaroori — nahi to site fallback pe rahegi)
-2. **Editor token** — Sanity → API → Tokens → **Add API token → role: Editor**
-   (jo token tumne diya wo "Access Manager" hai — sirf READ kar sakta hai)
-3. Token ko `.env.local` mein `SANITY_API_TOKEN=sk...` likho
-4. **Seed karo** — `node scripts/seed-sanity.mjs` (current content push: 36 channels, 149 articles, stories, ticker, settings)
-   - `node scripts/seed-sanity.mjs --with-images` — cover images bhi upload karta hai
-5. **Studio** — `npx sanity deploy` (hosted studio) ya `npm install sanity` + `npx sanity start`
-   Team members: Studio → People → invite (2 users free)
-
-> Sanity ke fayde: **image CDN automatic compression** (`?w=…&auto=format` — storage bachti hai),
-> **portable text** (images/YouTube kahi bhi post ke beech), **team roles built-in**, **daily posts
-> bina rebuild ke live** (homepage lists/ticker/polls/settings).
->
-> ⚠️ Naye article/channel ki *detail pages* next rebuild par generate hongi (static export hai).
-> Content edits (title/image/body) turant dikhte hain.
+**CLI**: `npx firebase deploy --only database` (rules update), `npx firebase projects:list`
 
 ## 🎬 Article Media (post ke beech)
 
@@ -257,16 +239,15 @@ node scripts/extract-data.mjs   # bhaskar-clone/ se data extract karta hai
 - `public/icon/` (channel icons)
 - `public/uploads/` (logo, stories, news images, ads, e-paper)
 
-## Deploy (Netlify drag-and-drop)
+## Deploy (Node server — Vercel / Render / VPS)
 
-Site fully static hai (content localStorage mein admin ke through save hota hai, koi server nahi):
+Site ab **server backend** hai (API routes + Firebase Admin SDK) — static export hata diya gaya:
 
 ```bash
-npm run build        # `output: export` — ./out/ folder banata hai
-cp -r out dist       # ya directly `out` ko use karo
+npm run build && npm run start   # production server
 ```
 
-- **`dist/`** (ya `out/`) folder ko Netlify drag-and-drop zone par drop karo — done!
-- `/admin` (password: `admin123`) bhi static hai aur deploy par kaam karega
-- Client-side navigation ke liye Netlify automatic `.html` pretty-URL fallback handle kar leta hai
-- LocalStorage per-browser hai — deploy ke baad client ke edits usi browser mein rahenge (Firebase connect hone par sab jagah sync hoga)
+- **Vercel**: repo connect karo ya `vercel --prod` — env vars (`.env.local` wale) Vercel dashboard mein add karo
+- **VPS**: `npm run build && npm run start` (pm2/systemd ke saath), reverse proxy port 3000 par
+- Env vars zaroori: `FIREBASE_SERVICE_ACCOUNT` (JSON inline, base64 recommended) + `FIREBASE_DATABASE_URL` + `FIREBASE_PROJECT_ID` + `ADMIN_SESSION_SECRET` + `NEXT_PUBLIC_FIREBASE_*`
+- `/admin` server-rendered hai; login HttpOnly session cookie deta hai

@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "site": {
+      ".read": true,
+      ".write": false
+    },
+    ".read": false,
+    ".write": false
+  }
+}

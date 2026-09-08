@@ -1,13 +1,13 @@
 "use client";
 
-// Client-side fallback for Sanity articles created AFTER the last build.
-// Netlify rewrites /news/{new-slug} → /news/_sanity (200), and this page reads
-// the slug from the URL, then renders the article from the live Sanity store.
-// Articles that HAVE a static page are served normally (redirect never fires).
+// Client-side fallback for articles created in the admin panel AFTER the last
+// build. The hosting rewrite sends /news/{new-slug} here (200), this page
+// reads the slug from the URL and renders it from the live Firebase store.
+// Articles that HAVE a static page are served normally (rewrite never fires).
 import { useEffect, useState } from "react";
 import NewsClient from "../[slug]/NewsClient";
 
-export default function SanityNewsFallback() {
+export default function LiveNewsFallback() {
   const [slug, setSlug] = useState<string | null>(null);
 
   useEffect(() => {

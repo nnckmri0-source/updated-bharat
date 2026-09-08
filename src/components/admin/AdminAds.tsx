@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Pencil, Plus, Trash2, ArrowLeft } from "lucide-react";
 import { useSiteData, type EPaperEdition } from "@/lib/store";
-import { upsertSanityEdition, deleteSanityEdition, notifySync } from "@/lib/sanity-admin";
 import { Card, Btn, TInput, ImageInput, EmptyState } from "./ui";
 
 export function AdminAds() {
@@ -62,14 +61,12 @@ export function AdminEPaper() {
     } else {
       update((d) => ({ ...d, editions: [edition, ...d.editions] }));
     }
-    notifySync(upsertSanityEdition(edition), "E-Paper");
     setFormOpen(false);
   };
 
   const remove = (name: string) => {
     if (!confirm(`Delete edition "${name}"?`)) return;
     update((d) => ({ ...d, editions: d.editions.filter((e) => e.name !== name) }));
-    notifySync(deleteSanityEdition(name), "E-Paper delete");
   };
 
   if (formOpen) {

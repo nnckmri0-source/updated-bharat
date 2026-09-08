@@ -186,12 +186,12 @@ async function main() {
     })()`);
     await sleepMs(1200);
 
-    // With Sanity connected, the frontend reads content from Sanity (149 seeded
-    // articles), not from localStorage — so verify the frontend renders real
-    // article cards from the store instead of a localStorage-only article.
+    // With Firebase connected, the frontend reads content from Firebase RTDB
+    // (seeded articles), not from localStorage — so verify the frontend renders
+    // real article cards from the store instead of a localStorage-only article.
     await nav(BASE + "/latest");
     const articleLinks = await evaluate(`document.querySelectorAll("a[href*='/news/']").length`);
-    check("Frontend renders articles (Sanity content source)", articleLinks >= 5, `${articleLinks} article links`);
+    check("Frontend renders articles (Firebase content source)", articleLinks >= 5, `${articleLinks} article links`);
 
     // --- 5. reset back to defaults via admin dashboard reset ---
     await nav(BASE + "/admin");

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Home, Flame } from "lucide-react";
-import { useSiteData } from "@/lib/store";
+import { useSiteData, channelsBySlugList } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 import { SocialButtons } from "@/components/SocialRow";
 import CategoryIcon from "@/components/CategoryIcon";
@@ -12,10 +12,11 @@ export default function LeftSidebar() {
   const { data } = useSiteData();
   const { channels, settings } = data;
 
-  const mainChannels = channels.filter((c) =>
-    ["top-news", "local", "election-2026", "ipl-2026", "bhaskar-khaas", "db-original", "sports", "entertainment", "jobs-education", "business", "finance", "lifestyle", "jeevan-mantra", "women", "national", "international", "rashifal", "tech-auto", "fake-news-expose", "opinion", "madhurima", "magazine", "utility", "happy-life"].includes(c.slug)
-  );
-  const stateChannels = channels.filter((c) => ["madhya-pradesh", "uttar-pradesh", "rajasthan", "bihar"].includes(c.slug));
+  // Fixed display order — buttons never shuffle when data loads from Firebase.
+  const mainChannels = channelsBySlugList(channels, [
+    "top-news", "local", "election-2026", "ipl-2026", "bhaskar-khaas", "db-original", "sports", "entertainment", "jobs-education", "business", "finance", "lifestyle", "jeevan-mantra", "women", "national", "international", "rashifal", "tech-auto", "fake-news-expose", "opinion", "madhurima", "magazine", "utility", "happy-life",
+  ]);
+  const stateChannels = channelsBySlugList(channels, ["madhya-pradesh", "uttar-pradesh", "rajasthan", "bihar"]);
   const topStories = [...data.news].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 4);
 
   return (
@@ -27,15 +28,15 @@ export default function LeftSidebar() {
         {t("home")}
       </Link>
       {mainChannels.map((c) => (
-        <a key={c.slug} href={`/channel/${c.slug}`} className="left-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
+        <Link key={c.slug} href={`/channel/${c.slug}`} className="left-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
           <span className="nav-icon"><CategoryIcon slug={c.slug} size={16} /></span> {c.name}
-        </a>
+        </Link>
       ))}
       <hr style={{ borderColor: "var(--border)", margin: "8px 14px" }} />
       {stateChannels.map((c) => (
-        <a key={c.slug} href={`/channel/${c.slug}`} className="left-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
+        <Link key={c.slug} href={`/channel/${c.slug}`} className="left-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
           <span className="nav-icon"><CategoryIcon slug={c.slug} size={16} /></span> {c.name}
-        </a>
+        </Link>
       ))}
 
       <div className="sidebar-app-section">
@@ -50,7 +51,7 @@ export default function LeftSidebar() {
       </div>
       <div style={{ padding: "0 10px" }}>
         {topStories.map((s) => (
-          <a
+          <Link
             key={s.slug}
             href={`/news/${s.slug}`}
             style={{
@@ -71,7 +72,7 @@ export default function LeftSidebar() {
             <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--text)", lineHeight: 1.3, WebkitLineClamp: 2, overflow: "hidden", display: "-webkit-box", WebkitBoxOrient: "vertical" }}>
               {s.title}
             </span>
-          </a>
+          </Link>
         ))}
       </div>
     </aside>

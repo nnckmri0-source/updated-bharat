@@ -45,7 +45,7 @@ const TABS = [
 ];
 
 export default function AdminPage() {
-  const { data } = useSiteData();
+  const { data, backendReady } = useSiteData();
   // SSR-safe: always start logged OUT so the server HTML and the client's first
   // render match (no hydration mismatch). The saved session is restored in an
   // effect after mount — one frame later, no flicker on the login screen.
@@ -56,19 +56,58 @@ export default function AdminPage() {
   const [tab, setTab] = useState("dashboard");
 
   useEffect(() => {
-    try {
-      if (localStorage.getItem(ADMIN_AUTH_KEY) === "1") {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-time session restore after hydration
-        setAuthed(true);
+    void (async () => {
+      // Prefer the server session (HttpOnly cookie verified against Firebase).
+      try {
+        const res = await fetch("/api/admin/login", { cache: "no-store" });
+        if (res.ok) {
+          const json = (await res.json()) as { authed: boolean };
+          if (json.authed) {
+            setAuthed(true);
+            return;
+          }
+        }
+      } catch {
+        /* API unreachable — fall back to the local flag below */
       }
-    } catch {
-      /* ignore */
-    }
+      // Offline/dev fallback: local flag with a short-lived server session lost.
+      try {
+        if (localStorage.getItem(ADMIN_AUTH_KEY) === "1") {
+          setAuthed(true);
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
   }, []);
 
-  const login = (e: React.FormEvent) => {
+  const login = async (e: React.FormEvent) => {
     e.preventDefault();
-    // ONLY this ID + password can log in (both checked, exact match).
+    // Server-side check: credentials are verified against Firebase (Admin SDK)
+    // and a signed HttpOnly session cookie is issued for API writes.
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+      if (res.ok) {
+        try {
+          localStorage.setItem(ADMIN_AUTH_KEY, "1");
+        } catch { /* ignore */ }
+        setAuthed(true);
+        setError(false);
+        return;
+      }
+      if (res.status === 401) {
+        setError(true);
+        return;
+      }
+      // 503 / other — backend not configured; fall through to local check.
+    } catch {
+      /* network error — fall through to local check */
+    }
+    // Offline/dev fallback: local credential check (device-local settings).
     if (username.trim() === data.settings.adminUsername && password === data.settings.adminPassword) {
       try {
         localStorage.setItem(ADMIN_AUTH_KEY, "1");
@@ -83,6 +122,7 @@ export default function AdminPage() {
   };
 
   const logout = () => {
+    void fetch("/api/admin/login", { method: "DELETE" }).catch(() => { /* ignore */ });
     try {
       localStorage.removeItem(ADMIN_AUTH_KEY);
     } catch {
@@ -187,9 +227,11 @@ export default function AdminPage() {
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <h1 className="truncate text-[15px] font-extrabold text-slate-800 md:text-[17px]">{TABS.find((t) => t.id === tab)?.label}</h1>
-              <p className="hidden text-[11px] text-slate-400 sm:block">News, channels, stories, ticker, polls & e-paper sync to Sanity — live for all visitors. Homepage layout & footer save on this device.</p>
+              <p className="hidden text-[11px] text-slate-400 sm:block">Every save syncs to Firebase — live for all visitors in realtime, no rebuild needed.</p>
             </div>
-            <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-0.5 text-[10px] font-bold text-green-700 md:px-3 md:py-1 md:text-[11px]">● Live</span>
+            <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold md:px-3 md:py-1 md:text-[11px] ${backendReady === false ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}`}>
+              {backendReady === false ? "○ Offline" : "● Live"}
+            </span>
           </div>
         </header>
         <main className="p-3 md:p-7">

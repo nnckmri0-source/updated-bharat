@@ -78,7 +78,7 @@ export default function HomePage() {
   const byChannel = (slug: string | null) => news.filter((n) => n.channel === slug);
   const getChannelName = (slug: string | null) => channels.find((c) => c.slug === slug)?.name ?? slug ?? "";
 
-  // Sorted newest first so Sanity fresh articles always surface even if home config is stale
+  // Sorted newest first so fresh Firebase articles always surface even if home config is stale
   const sorted = [...news].sort((a, b) => {
     const da = new Date(a.date).getTime() || 0;
     const db = new Date(b.date).getTime() || 0;

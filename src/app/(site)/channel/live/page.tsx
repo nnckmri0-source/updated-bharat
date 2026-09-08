@@ -1,12 +1,12 @@
 "use client";
 
-// Client-side fallback for Sanity channels created AFTER the last build.
-// Netlify rewrites /channel/{new-slug} → /channel/_sanity (200), and this page
-// reads the slug from the URL, then renders the channel from the live store.
+// Client-side fallback for channels created in the admin panel AFTER the last
+// build. The hosting rewrite sends /channel/{new-slug} here (200), this page
+// reads the slug from the URL and renders it from the live Firebase store.
 import { useEffect, useState } from "react";
 import ChannelClient from "../[slug]/ChannelClient";
 
-export default function SanityChannelFallback() {
+export default function LiveChannelFallback() {
   const [slug, setSlug] = useState<string | null>(null);
 
   useEffect(() => {

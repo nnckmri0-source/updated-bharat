@@ -16,7 +16,7 @@ import {
   ChevronRight,
   ArrowLeft,
 } from "lucide-react";
-import { useSiteData } from "@/lib/store";
+import { useSiteData, orderChannels, channelsBySlugList } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import NotificationBell from "@/components/NotificationBell";
 import CategoryIcon from "@/components/CategoryIcon";
@@ -45,15 +45,16 @@ export default function Header() {
     }, 2500);
   };
 
-  // channel groups for the nav
-  const primaryNav = channels.filter((c) =>
-    ["local", "election-2026", "ipl-2026", "db-original", "lifestyle", "science", "uttar-pradesh", "opinion", "jeevan-mantra", "jobs-education", "tech-auto", "finance", "apple"].includes(c.slug)
-  );
-  const leftNavAll = channels.filter((c) => c.slug !== "0" && c.slug !== "top-news");
-  const leftNavTop = channels.filter((c) =>
-    ["top-news", "local", "election-2026", "ipl-2026", "bhaskar-khaas", "db-original", "sports", "entertainment", "jobs-education", "business", "finance", "apple", "lifestyle", "jeevan-mantra", "women", "national", "international", "rashifal", "tech-auto", "fake-news-expose", "opinion", "madhurima", "magazine", "utility", "happy-life"].includes(c.slug)
-  );
-  const stateChannels = channels.filter((c) => ["madhya-pradesh", "uttar-pradesh", "rajasthan", "bihar"].includes(c.slug));
+  // channel groups for the nav — ALWAYS in the canonical order below, so the
+  // buttons never shuffle when data loads from localStorage/Firebase.
+  const primaryNav = channelsBySlugList(channels, [
+    "local", "election-2026", "ipl-2026", "db-original", "lifestyle", "science", "uttar-pradesh", "opinion", "jeevan-mantra", "jobs-education", "tech-auto", "finance", "apple",
+  ]);
+  const leftNavTop = channelsBySlugList(channels, [
+    "top-news", "local", "election-2026", "ipl-2026", "bhaskar-khaas", "db-original", "sports", "entertainment", "jobs-education", "business", "finance", "apple", "lifestyle", "jeevan-mantra", "women", "national", "international", "rashifal", "tech-auto", "fake-news-expose", "opinion", "madhurima", "magazine", "utility", "happy-life",
+  ]);
+  const leftNavAll = orderChannels(channels).filter((c) => c.slug !== "0" && !leftNavTop.some((t) => t.slug === c.slug));
+  const stateChannels = channelsBySlugList(channels, ["madhya-pradesh", "uttar-pradesh", "rajasthan", "bihar"]);
 
   const router = useRouter();
   const runSearch = (e: React.FormEvent) => {
@@ -151,10 +152,10 @@ export default function Header() {
               <Flame size={12} style={{ color: "var(--orange)" }} /> {t("topNews")}
             </Link>
             {primaryNav.map((c) => (
-              <a key={c.slug} href={`/channel/${c.slug}`} className="mobile-cat-item" style={{ color: "inherit", textDecoration: "none" }}>
+              <Link key={c.slug} href={`/channel/${c.slug}`} className="mobile-cat-item" style={{ color: "inherit", textDecoration: "none" }}>
                 <CategoryIcon slug={c.slug} size={14} />
                 {c.name}
-              </a>
+              </Link>
             ))}
           </div>
         </div>
@@ -169,10 +170,10 @@ export default function Header() {
                 <Flame size={13} /> {t("topNews")}
               </Link>
               {leftNavAll.map((c) => (
-                <a key={c.slug} href={`/channel/${c.slug}`} className="cat-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
+                <Link key={c.slug} href={`/channel/${c.slug}`} className="cat-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
                   <CategoryIcon slug={c.slug} size={13} />
                   {c.name}
-                </a>
+                </Link>
               ))}
               <Link href="/visualstories" className="cat-nav-item">
                 <PlayCircle size={13} /> Visual Stories
@@ -230,15 +231,15 @@ export default function Header() {
             {t("home")}
           </Link>
           {leftNavTop.map((c) => (
-            <a key={c.slug} href={`/channel/${c.slug}`} className="left-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
+            <Link key={c.slug} href={`/channel/${c.slug}`} className="left-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
               <span className="nav-icon"><CategoryIcon slug={c.slug} size={16} /></span> {c.name}
-            </a>
+            </Link>
           ))}
           <hr style={{ borderColor: "var(--border)", margin: "8px 14px" }} />
           {stateChannels.map((c) => (
-            <a key={c.slug} href={`/channel/${c.slug}`} className="left-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
+            <Link key={c.slug} href={`/channel/${c.slug}`} className="left-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
               <span className="nav-icon"><CategoryIcon slug={c.slug} size={16} /></span> {c.name}
-            </a>
+            </Link>
           ))}
 
           {/* Follow (Mobile Offcanvas) */}

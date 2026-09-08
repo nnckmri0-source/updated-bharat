@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Pencil, Plus, Trash2, ArrowLeft } from "lucide-react";
 import { useSiteData, type Poll } from "@/lib/store";
-import { upsertSanityPoll, deleteSanityPoll, notifySync } from "@/lib/sanity-admin";
 import { Card, Btn, TInput, TArea, EmptyState } from "./ui";
 
 const emptyForm = { question: "", optionsText: "" };
@@ -42,7 +41,6 @@ export default function AdminPolls() {
     } else {
       update((d) => ({ ...d, polls: [poll, ...d.polls] }));
     }
-    notifySync(upsertSanityPoll(poll), "Poll");
     setFormOpen(false);
   };
 
@@ -51,14 +49,11 @@ export default function AdminPolls() {
       ...d,
       polls: d.polls.map((p) => (p.id === id ? { ...p, published: !p.published } : p)),
     }));
-    const target = data.polls.find((p) => p.id === id);
-    if (target) notifySync(upsertSanityPoll({ ...target, published: !target.published }), "Poll");
   };
 
   const remove = (id: string) => {
     if (!confirm("Delete this poll permanently?")) return;
     update((d) => ({ ...d, polls: d.polls.filter((p) => p.id !== id) }));
-    notifySync(deleteSanityPoll(id), "Poll delete");
   };
 
   if (formOpen) {

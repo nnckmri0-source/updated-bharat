@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/news/*", "destination": "/news/sanity-fallback.html" },
-    { "source": "/channel/*", "destination": "/channel/sanity-fallback.html" }
+    { "source": "/news/*", "destination": "/news/live.html" },
+    { "source": "/channel/*", "destination": "/channel/live.html" }
   ]
 }
