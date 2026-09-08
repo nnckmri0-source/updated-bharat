@@ -3,7 +3,7 @@
 // PATCH /api/site — merge a partial document (shallow merge for settings/home/footer)
 
 import { NextRequest, NextResponse } from "next/server";
-import { readSiteDoc, writeSiteDoc, throwIfResponse } from "@/lib/api-utils";
+import { readSiteDoc, writeSiteDoc, throwIfResponse, stripCredentials, applyServerOwnedFields } from "@/lib/api-utils";
 import { verifyAdminRequest } from "@/lib/admin-auth";
 import type { SiteData } from "@/lib/site-data";
 
@@ -12,7 +12,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const doc = await readSiteDoc();
-    return NextResponse.json({ ok: true, data: doc });
+    // Admin credentials are secrets — never sent through the public API.
+    return NextResponse.json({ ok: true, data: stripCredentials(doc) });
   } catch (e) {
     throwIfResponse(e);
     console.error("[api/site GET]", e);
@@ -30,7 +31,8 @@ export async function PUT(req: NextRequest) {
     if (!body || !Array.isArray(body.news) || !body.settings) {
       return NextResponse.json({ ok: false, error: "Invalid site document" }, { status: 400 });
     }
-    await writeSiteDoc(body);
+    // The client can never set the admin credentials — server-owned fields.
+    await writeSiteDoc(applyServerOwnedFields(body));
     return NextResponse.json({ ok: true });
   } catch (e) {
     throwIfResponse(e);
@@ -50,12 +52,12 @@ export async function PATCH(req: NextRequest) {
     const next: SiteData = {
       ...current,
       ...partial,
-      settings: { ...current.settings, ...(partial.settings ?? {}) },
+      settings: { ...current.settings, ...(partial.settings ?? {}), adminUsername: current.settings.adminUsername, adminPassword: current.settings.adminPassword },
       home: { ...current.home, ...(partial.home ?? {}) },
       footer: { ...current.footer, ...(partial.footer ?? {}) },
     };
     await writeSiteDoc(next);
-    return NextResponse.json({ ok: true, data: next });
+    return NextResponse.json({ ok: true, data: stripCredentials(next) });
   } catch (e) {
     throwIfResponse(e);
     console.error("[api/site PATCH]", e);

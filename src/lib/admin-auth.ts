@@ -12,7 +12,7 @@
 
 import { cookies } from "next/headers";
 import { createHmac, timingSafeEqual, randomBytes } from "crypto";
-import { readSiteDoc } from "@/lib/api-utils";
+import { readAdminCreds } from "@/lib/api-utils";
 import { ADMIN_READY } from "@/lib/firebase-admin";
 
 const COOKIE_NAME = "ub_admin_session";
@@ -62,11 +62,8 @@ export async function verifyAdminRequest(): Promise<{ username: string } | null>
 
 export async function checkAdminCredentials(username: string, password: string): Promise<string | null> {
   if (!ADMIN_READY) return null;
-  const doc = await readSiteDoc();
-  const validUser = doc.settings.adminUsername;
-  const validPass = doc.settings.adminPassword;
-  if (typeof validUser !== "string" || typeof validPass !== "string") return null;
-  if (username.trim() === validUser && password === validPass) return validUser;
+  const creds = await readAdminCreds();
+  if (username.trim() === creds.username && password === creds.password) return creds.username;
   return null;
 }
 

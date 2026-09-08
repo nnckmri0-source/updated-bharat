@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useSiteData, type FooterLink } from "@/lib/store";
 import { Card, Btn, TInput, TArea, ImageInput, SaveBar } from "./ui";
@@ -154,36 +154,49 @@ export function AdminSettings() {
 }
 
 export function AdminPassword() {
-  const { data, update } = useSiteData();
   const [current, setCurrent] = useState("");
-  const [nextId, setNextId] = useState(data.settings.adminUsername);
+  const [nextId, setNextId] = useState("");
   const [next, setNext] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const change = () => {
-    if (current !== data.settings.adminPassword) {
-      setMsg({ ok: false, text: "Current password is incorrect." });
-      return;
+  // Load the current Admin ID from the auth-gated credentials endpoint
+  // (credentials are server-owned secrets — never in the public site data).
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/credentials", { cache: "no-store" });
+        if (res.ok) {
+          const json = (await res.json()) as { username: string };
+          setNextId(json.username);
+        }
+      } catch {
+        /* ignore — field stays empty */
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const change = async () => {
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/credentials", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ currentPassword: current, username: nextId.trim(), password: next.trim() || undefined }),
+      });
+      const json = (await res.json()) as { ok: boolean; error?: string };
+      if (res.ok) {
+        setCurrent("");
+        setNext("");
+        setMsg({ ok: true, text: "Admin login updated ✓ — use the new ID/password next time." });
+      } else {
+        setMsg({ ok: false, text: json.error || "Update failed." });
+      }
+    } catch {
+      setMsg({ ok: false, text: "Server unreachable — try again." });
     }
-    if (!nextId.trim()) {
-      setMsg({ ok: false, text: "Admin ID cannot be empty." });
-      return;
-    }
-    if (next.trim() && next.trim().length < 4) {
-      setMsg({ ok: false, text: "New password must be at least 4 characters." });
-      return;
-    }
-    update((d) => ({
-      ...d,
-      settings: {
-        ...d.settings,
-        adminUsername: nextId.trim(),
-        adminPassword: next.trim() || d.settings.adminPassword,
-      },
-    }));
-    setCurrent("");
-    setNext("");
-    setMsg({ ok: true, text: "Admin login updated ✓ — use the new ID/password next time." });
   };
 
   return (
@@ -192,13 +205,13 @@ export function AdminPassword() {
       subtitle="Only this ID + password can open the admin panel"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
-        <TInput label="Admin ID" value={nextId} onChange={setNextId} placeholder="admin" />
+        <TInput label="Admin ID" value={nextId} onChange={setNextId} placeholder={loading ? "Loading…" : "admin"} />
         <TInput label="Current Password (required to save)" value={current} onChange={setCurrent} type="password" />
         <TInput label="New Password (leave blank to keep)" value={next} onChange={setNext} type="password" />
       </div>
       {msg && <p className={`mt-3 text-[13px] font-medium ${msg.ok ? "text-green-600" : "text-red-500"}`}>{msg.text}</p>}
       <div className="mt-4">
-        <Btn onClick={change} disabled={!current || !nextId.trim()}>
+        <Btn onClick={() => void change()} disabled={!current || !nextId.trim()}>
           Update Login
         </Btn>
       </div>

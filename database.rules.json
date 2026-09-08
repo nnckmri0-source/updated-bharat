@@ -4,6 +4,10 @@
       ".read": true,
       ".write": false
     },
+    "admin-credentials": {
+      ".read": false,
+      ".write": false
+    },
     ".read": false,
     ".write": false
   }

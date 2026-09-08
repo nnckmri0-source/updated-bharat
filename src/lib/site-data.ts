@@ -276,19 +276,17 @@ export function mergeStored(raw: string | null): SiteData {
   try {
     const p = JSON.parse(raw);
     if (!p || typeof p !== "object") return d;
-    // Credential migration: browsers holding the previous default login
-    // (admin/admin123) move to the new complex defaults automatically.
-    // A login the owner changed manually in the panel is left untouched.
-    const storedUser = p.settings?.adminUsername as string | undefined;
-    const storedPass = p.settings?.adminPassword as string | undefined;
     return {
       ...d,
       ...p,
       settings: {
         ...d.settings,
         ...(p.settings ?? {}),
-        adminUsername: !storedUser || storedUser === "admin" ? d.settings.adminUsername : storedUser,
-        adminPassword: !storedPass || storedPass === "admin123" ? d.settings.adminPassword : storedPass,
+        // Credentials are server-owned secrets: localStorage may hold stale
+        // copies (the public API no longer returns them). Defaults win here —
+        // the real values only exist in Firebase and never render client-side.
+        adminUsername: "",
+        adminPassword: "",
         social: { ...d.settings.social, ...(p.settings?.social ?? {}) },
         adSlots: { ...d.settings.adSlots, ...(p.settings?.adSlots ?? {}) },
       },
@@ -302,9 +300,9 @@ export function mergeStored(raw: string | null): SiteData {
 
 /**
  * Merge remote (server/Firebase) data over local. Remote is the live source of
- * truth INCLUDING admin credentials — writes are gated server-side via the
- * admin session cookie, so cloud-syncing the login is safe. The panel's
- * password tab always shows the live credentials.
+ * truth. NOTE: the public API strips admin credentials, so remote.settings
+ * carries empty strings for them — keep whatever the local doc has (which is
+ * also "" on the client). Real credentials live only in Firebase + the server.
  */
 export function mergeRemote(local: SiteData, remote: Partial<SiteData> | null): SiteData {
   if (!remote || typeof remote !== "object") return local;

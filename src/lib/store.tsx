@@ -65,6 +65,22 @@ async function apiGetSite(): Promise<SiteData | null> {
   }
 }
 
+/**
+ * Credentials are server-owned secrets — the public API strips them, and the
+ * raw RTDB listener must strip them too before the doc reaches React state
+ * or localStorage (where any visitor could read the admin password).
+ */
+function stripCredentialsFromRemote(remote: Partial<SiteData>): Partial<SiteData> {
+  return {
+    ...remote,
+    settings: {
+      ...(remote.settings ?? {}),
+      adminUsername: "",
+      adminPassword: "",
+    } as Partial<SiteData>["settings"],
+  };
+}
+
 export function SiteDataProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<SiteData>(() => buildDefaults());
   const [backendReady, setBackendReady] = useState<boolean | null>(null);
@@ -118,8 +134,9 @@ export function SiteDataProvider({ children }: { children: React.ReactNode }) {
           siteRef,
           (snap) => {
             if (cancelled) return;
-            const remote = (snap.val() as Partial<SiteData> | null) ?? null;
-            if (!remote || !remote.news?.length) return; // empty node — server seeds it via GET /api/site
+            const raw = (snap.val() as Partial<SiteData> | null) ?? null;
+            if (!raw || !raw.news?.length) return; // empty node — server seeds it via GET /api/site
+            const remote = stripCredentialsFromRemote(raw);
             setData((prev) => {
               const next = mergeRemote(prev, remote);
               try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* */ }

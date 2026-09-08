@@ -57,7 +57,9 @@ export default function AdminPage() {
 
   useEffect(() => {
     void (async () => {
-      // Prefer the server session (HttpOnly cookie verified against Firebase).
+      // Session restore ONLY via the server (HttpOnly cookie verified against
+      // Firebase). No localStorage auto-login — a saved flag must never open
+      // the panel without valid credentials.
       try {
         const res = await fetch("/api/admin/login", { cache: "no-store" });
         if (res.ok) {
@@ -68,23 +70,18 @@ export default function AdminPage() {
           }
         }
       } catch {
-        /* API unreachable — fall back to the local flag below */
+        /* API unreachable — stay logged out */
       }
-      // Offline/dev fallback: local flag with a short-lived server session lost.
-      try {
-        if (localStorage.getItem(ADMIN_AUTH_KEY) === "1") {
-          setAuthed(true);
-        }
-      } catch {
-        /* ignore */
-      }
+      // Legacy cleanup: drop the old always-trusted localStorage flag.
+      try { localStorage.removeItem(ADMIN_AUTH_KEY); } catch { /* ignore */ }
     })();
   }, []);
 
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Server-side check: credentials are verified against Firebase (Admin SDK)
-    // and a signed HttpOnly session cookie is issued for API writes.
+    // Server-side check ONLY: credentials are verified against Firebase (Admin
+    // SDK) and a signed HttpOnly session cookie is issued for API writes.
+    setError(false);
     try {
       const res = await fetch("/api/admin/login", {
         method: "POST",
@@ -92,31 +89,12 @@ export default function AdminPage() {
         body: JSON.stringify({ username: username.trim(), password }),
       });
       if (res.ok) {
-        try {
-          localStorage.setItem(ADMIN_AUTH_KEY, "1");
-        } catch { /* ignore */ }
         setAuthed(true);
-        setError(false);
         return;
       }
-      if (res.status === 401) {
-        setError(true);
-        return;
-      }
-      // 503 / other — backend not configured; fall through to local check.
+      setError(true);
     } catch {
-      /* network error — fall through to local check */
-    }
-    // Offline/dev fallback: local credential check (device-local settings).
-    if (username.trim() === data.settings.adminUsername && password === data.settings.adminPassword) {
-      try {
-        localStorage.setItem(ADMIN_AUTH_KEY, "1");
-      } catch {
-        /* ignore */
-      }
-      setAuthed(true);
-      setError(false);
-    } else {
+      // API unreachable — without the server there is no way to verify login.
       setError(true);
     }
   };
