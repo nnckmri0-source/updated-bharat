@@ -91,12 +91,10 @@ export default function AdminPage() {
     setErrorText("");
     setBusy(true);
     try {
-      const identifier = username.trim();
-      const isMail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(isMail ? { email: identifier, password } : { username: identifier, password }),
+        body: JSON.stringify({ email: username.trim().toLowerCase(), password }),
       });
       if (res.ok) {
         setAuthed(true);
@@ -181,13 +179,13 @@ export default function AdminPage() {
             ) : (
               <form onSubmit={login} className="space-y-3">
                 <input
-                  type="text"
+                  type="email"
                   value={username}
                   onChange={(e) => {
                     setUsername(e.target.value);
                     setErrorText("");
                   }}
-                  placeholder="Admin ID ya Email"
+                  placeholder="Admin Email"
                   autoFocus
                   autoComplete="username"
                   className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"

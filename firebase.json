@@ -1,5 +1,13 @@
 {
   "database": {
     "rules": "database.rules.json"
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true
+    }
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }

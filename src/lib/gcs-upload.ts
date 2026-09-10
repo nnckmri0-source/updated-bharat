@@ -28,8 +28,8 @@ function saCredentials(): LoadedSa | null {
   }
   const path = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (path) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports -- Node-only
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- Node-only file read
       return JSON.parse(require("fs").readFileSync(path, "utf8"));
     } catch {
       /* fall through */

@@ -105,7 +105,7 @@ async function main() {
         Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set.call(el, val);
         el.dispatchEvent(new Event("input", { bubbles: true }));
       };
-      setVal(document.querySelector('input[placeholder="Admin ID ya Email"]'), "bharat.admin");
+      setVal(document.querySelector('input[placeholder="Admin Email"]'), "nnckmri0@gmail.com");
       setVal(document.querySelector('input[type="password"]'), "UB#2026$Bharat!Admin");
       document.querySelector("form button[type=submit]").click();
     })()`);

@@ -166,76 +166,14 @@ export function AdminSettings() {
 }
 
 export function AdminPassword() {
-  const [current, setCurrent] = useState("");
-  const [nextId, setNextId] = useState("");
-  const [next, setNext] = useState("");
-  const [showPass, setShowPass] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Load the current Admin ID from the auth-gated credentials endpoint
-  // (credentials are server-owned secrets — never in the public site data).
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await fetch("/api/admin/credentials", { cache: "no-store" });
-        if (res.ok) {
-          const json = (await res.json()) as { username: string };
-          setNextId(json.username);
-        }
-      } catch {
-        /* ignore — field stays empty */
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  const change = async () => {
-    setMsg(null);
-    try {
-      const res = await fetch("/api/admin/credentials", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ currentPassword: current, username: nextId.trim(), password: next.trim() || undefined }),
-      });
-      const json = (await res.json()) as { ok: boolean; error?: string };
-      if (res.ok) {
-        setCurrent("");
-        setNext("");
-        setMsg({ ok: true, text: "Admin login updated ✓ — use the new ID/password next time." });
-      } else {
-        setMsg({ ok: false, text: json.error || "Update failed." });
-      }
-    } catch {
-      setMsg({ ok: false, text: "Server unreachable — try again." });
-    }
-  };
-
   return (
     <div className="space-y-4">
       <Card
-        title="Admin Login (ID + Password)"
-        subtitle="Only this ID + password can open the admin panel"
+        title="Admin Login — Email Only"
+        subtitle="Login is done only via the allowlisted email + password (Firebase Auth). Password reset: 'Forgot password?' on the login screen sends a secure reset link to the email."
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
-          <TInput label="Admin ID" value={nextId} onChange={setNextId} placeholder={loading ? "Loading…" : "admin"} />
-          <div>
-            <span className="block text-[13px] font-semibold text-slate-700 mb-1">Current Password (required to save)</span>
-            <div className="relative">
-              <input type={showPass ? "text" : "password"} value={current} onChange={(e) => setCurrent(e.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pr-10 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition" />
-              <button type="button" onClick={() => setShowPass((v) => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" aria-label={showPass ? "Hide password" : "Show password"}>
-                {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-          </div>
-          <TInput label="New Password (leave blank to keep)" value={next} onChange={setNext} type={showPass ? "text" : "password"} />
-        </div>
-        {msg && <p className={`mt-3 text-[13px] font-medium ${msg.ok ? "text-green-600" : "text-red-500"}`}>{msg.text}</p>}
-        <div className="mt-4">
-          <Btn onClick={() => void change()} disabled={!current || !nextId.trim()}>
-            Update Login
-          </Btn>
+        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-[13px] font-semibold text-green-700">
+          Login email: <strong>nnckmri0@gmail.com</strong> — koi aur email ID/password se admin panel nahi khulega.
         </div>
       </Card>
 
@@ -321,7 +259,7 @@ function AdminEmails() {
         ))}
       </div>
       <p className="mt-3 text-[11px] text-slate-400">
-        Password reset: panel ke login screen par "Forgot password?" — Firebase khud email par secure reset link bhejta hai.
+        Password reset: panel ke login screen par &quot;Forgot password?&quot; — Firebase khud email par secure reset link bhejta hai.
       </p>
     </Card>
   );
