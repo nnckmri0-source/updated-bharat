@@ -1,7 +1,6 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
-import { WhatsAppIcon } from "@/components/BrandIcons";
+import { Share2 } from "lucide-react";
 import type { NewsArticle } from "@/data/news";
 
 export default function BhaskarRow({ article }: { article: NewsArticle }) {
@@ -23,19 +22,9 @@ export default function BhaskarRow({ article }: { article: NewsArticle }) {
               {article.title}
             </h3>
           </a>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
-            {article.channelName ? (
-              <a href={`/channel/${article.channel}`} className="badge rounded-pill" style={{ fontSize: "0.72rem", fontWeight: 600, background: "#fff", border: "1px solid #ddd", color: "var(--text-muted)", padding: "3px 12px", display: "inline-flex", alignItems: "center", gap: 4, textDecoration: "none" }}>
-                {article.channelName} <ChevronRight size={9} />
-              </a>
-            ) : (
-              <span />
-            )}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: 12 }}>
             <button type="button" onClick={share} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>
-              <span style={{ color: "#25D366", display: "inline-flex" }}>
-                <WhatsAppIcon size={17} />
-              </span>
-              Share
+              <Share2 size={15} /> Share
             </button>
           </div>
         </div>

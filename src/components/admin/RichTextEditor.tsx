@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Bold, Italic, Underline, Heading1, Heading2, Heading3, Link2, Image as ImageIcon, Video, Quote, List, ListOrdered } from "lucide-react";
+import { Bold, Italic, Underline, Heading1, Heading2, Heading3, Link2, Image as ImageIcon, Video, Quote, List, ListOrdered, Loader2 } from "lucide-react";
+import { compressImage, uploadCompressedImage } from "@/lib/image-compress";
 
 type Props = {
   value: string; // HTML string
@@ -17,6 +18,8 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
   const [imgCaption, setImgCaption] = useState("");
   const [showYT, setShowYT] = useState(false);
   const [ytUrl, setYtUrl] = useState("");
+  const [imgBusy, setImgBusy] = useState(false);
+  const [imgErr, setImgErr] = useState("");
 
   // Sync external value to editor on mount & when value changes externally (avoid loop)
   useEffect(() => {
@@ -69,11 +72,25 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
     setImgCaption("");
   };
 
-  const onImgFile = (file?: File | null) => {
+  const onImgFile = async (file?: File | null) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setImgUrl(String(reader.result ?? ""));
-    reader.readAsDataURL(file);
+    setImgErr("");
+    setImgBusy(true);
+    try {
+      // Compress hard (~15KB WebP) then upload to Firebase Storage → URL.
+      const dataUrl = await compressImage(file, "content");
+      let final = dataUrl;
+      try {
+        final = await uploadCompressedImage(dataUrl, file.name, "content");
+      } catch {
+        // Storage unavailable — keep the compressed data-URL so upload still works.
+      }
+      setImgUrl(final);
+    } catch (e) {
+      setImgErr((e as Error).message || "Image could not be processed");
+    } finally {
+      setImgBusy(false);
+    }
   };
 
   const insertYoutube = () => {
@@ -117,11 +134,12 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
           <div className="text-[12px] font-bold text-slate-700">Insert Image — with Alt & Caption</div>
           <div className="flex gap-2">
             <input type="text" value={imgUrl} onChange={(e) => setImgUrl(e.target.value)} placeholder="Image URL or upload" className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-orange-500" />
-            <label className="shrink-0 cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-50">
-              Upload
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => onImgFile(e.target.files?.[0])} />
+            <label className={`shrink-0 cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-50 ${imgBusy ? "opacity-60 pointer-events-none" : ""}`}>
+              {imgBusy ? <span className="inline-flex items-center gap-1"><Loader2 size={13} className="animate-spin" /> Uploading…</span> : "Upload"}
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => void onImgFile(e.target.files?.[0])} />
             </label>
           </div>
+          {imgErr && <div className="text-[12px] font-medium text-red-500">{imgErr}</div>}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <input type="text" value={imgAlt} onChange={(e) => setImgAlt(e.target.value)} placeholder="Alt text (SEO & accessibility)" className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-orange-500" />
             <input type="text" value={imgCaption} onChange={(e) => setImgCaption(e.target.value)} placeholder="Caption shown below image" className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-orange-500" />

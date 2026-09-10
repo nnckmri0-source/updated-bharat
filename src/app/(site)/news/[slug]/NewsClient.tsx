@@ -58,7 +58,7 @@ function RichHtml({ html }: { html: string }) {
 
 export default function NewsClient({ slug }: { slug: string }) {
   useLang(); // re-render labels on language switch
-  const { data } = useSiteData();
+  const { data, hydrated } = useSiteData();
   const { news, channels, settings } = data;
   const [zoom, setZoom] = useState(1);
   const textSizeBtn = {
@@ -93,6 +93,17 @@ export default function NewsClient({ slug }: { slug: string }) {
     }
   };
   if (!article) {
+    // Live data still loading (freshly published articles arrive via Firebase) —
+    // show a loader instead of "article not found".
+    if (!hydrated) {
+      return (
+        <div className="widget-box" style={{ padding: 60, textAlign: "center" }}>
+          <div style={{ width: 34, height: 34, border: "3px solid var(--border)", borderTopColor: "var(--orange)", borderRadius: "50%", margin: "0 auto 14px", animation: "spin 0.8s linear infinite" }} />
+          <p style={{ color: "var(--text-muted)", margin: 0 }}>Loading story…</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        </div>
+      );
+    }
     return (
       <div className="widget-box" style={{ padding: 60, textAlign: "center" }}>
         <FileQuestion size={44} style={{ color: "var(--text-light)", margin: "0 auto 14px", display: "block" }} />

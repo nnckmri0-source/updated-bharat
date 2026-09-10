@@ -10,19 +10,6 @@ import NewsletterForm from "@/components/NewsletterForm";
 import CategoryIcon from "@/components/CategoryIcon";
 import { FacebookIcon, XIcon, InstagramIcon, YouTubeIcon, WhatsAppIcon } from "@/components/BrandIcons";
 
-function timeAgo(dateStr: string): string {
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  const diff = Date.now() - d.getTime();
-  const days = Math.floor(diff / 86400000);
-  if (days < 1) return "Today";
-  if (days < 30) return `${days} day${days > 1 ? "s" : ""} ago`;
-  const months = Math.floor(days / 30);
-  if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
-  const years = Math.floor(months / 12);
-  return `${years} year${years > 1 ? "s" : ""} ago`;
-}
-
 export default function RightSidebar() {
   useLang(); // re-render labels on language switch
   const { data } = useSiteData();
@@ -88,19 +75,10 @@ export default function RightSidebar() {
               <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <a href={`/news/${n.slug}`} style={{ textDecoration: "none", color: "inherit" }}>
-                    <div className="news-row-title mb-1" style={{ fontSize: "0.85rem", lineHeight: 1.3, WebkitLineClamp: 2 }}>
+                    <div className="news-row-title" style={{ fontSize: "0.85rem", lineHeight: 1.3, WebkitLineClamp: 2 }}>
                       {n.title}
                     </div>
                   </a>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
-                    <span style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>
-                      <History size={11} style={{ display: "inline", marginRight: 4 }} />
-                      {timeAgo(n.date)}
-                    </span>
-                    <span style={{ color: "#25D366", display: "inline-flex", cursor: "pointer" }} title="Share">
-                      <WhatsAppIcon size={13} />
-                    </span>
-                  </div>
                 </div>
                 {n.image && (
                   <div style={{ flexShrink: 0 }}>
@@ -114,6 +92,7 @@ export default function RightSidebar() {
       </div>
 
       {/* Social Follow */}
+      {settings.socialVisible !== false && (
       <div className="widget-box mb-4">
         <div className="widget-title">
           <Users size={15} /> {t("followUs")}
@@ -135,6 +114,7 @@ export default function RightSidebar() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Most Read */}
       <div className="widget-box mb-4">

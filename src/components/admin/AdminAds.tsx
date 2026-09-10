@@ -22,7 +22,7 @@ export function AdminAds() {
     <Card title="Advertisement Slots" subtitle="These images appear inside news article pages. Leave empty to hide a slot.">
       <div className="space-y-4">
         {slots.map((s) => (
-          <ImageInput key={s.key} label={s.label} value={adSlots[s.key]} onChange={(v) => set(s.key, v)} hint={s.hint} previewHeight={56} />
+          <ImageInput key={s.key} label={s.label} value={adSlots[s.key]} onChange={(v) => set(s.key, v)} hint={s.hint} previewHeight={56} preset="cover" folder="ads" />
         ))}
       </div>
       <p className="mt-4 text-[11px] text-slate-400">
@@ -83,7 +83,7 @@ export function AdminEPaper() {
           <TInput label="Edition Name *" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="e.g. HFH" />
           <TInput label="Date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} />
           <div className="md:col-span-2">
-            <ImageInput label="Cover Image *" value={form.cover} onChange={(v) => setForm({ ...form, cover: v })} previewHeight={140} />
+            <ImageInput label="Cover Image *" value={form.cover} onChange={(v) => setForm({ ...form, cover: v })} previewHeight={140} preset="cover" folder="epaper" />
           </div>
           <div className="md:col-span-2">
             <TInput label="PDF Link" value={form.pdf} onChange={(v) => setForm({ ...form, pdf: v })} placeholder="/uploads/pdfs/edition.pdf or https://…" />

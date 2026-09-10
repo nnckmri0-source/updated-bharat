@@ -68,6 +68,8 @@ export type SiteSettings = {
   name: string;
   tagline: string;
   logo: string;
+  favicon: string;
+  socialVisible: boolean;
   footerAbout: string;
   copyright: string;
   adminUsername: string;
@@ -184,6 +186,8 @@ export function buildDefaults(): SiteData {
       name: defaultSiteConfig.name,
       tagline: defaultSiteConfig.tagline,
       logo: norm(defaultSiteConfig.logo) ?? "",
+      favicon: "",
+      socialVisible: true,
       footerAbout: "Get the latest news delivered straight to your inbox.",
       copyright: "All rights reserved.",
       adminUsername: "bharat.admin",

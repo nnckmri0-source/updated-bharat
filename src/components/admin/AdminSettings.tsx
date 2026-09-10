@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff } from "lucide-react";
 import { useSiteData, type FooterLink } from "@/lib/store";
 import { Card, Btn, TInput, TArea, ImageInput, SaveBar } from "./ui";
 
@@ -12,6 +12,8 @@ export function AdminSettings() {
     name: s.name,
     tagline: s.tagline,
     logo: s.logo,
+    favicon: s.favicon ?? "",
+    socialVisible: s.socialVisible !== false,
     footerAbout: s.footerAbout,
     copyright: s.copyright,
     liveUrl: s.liveUrl ?? "",
@@ -27,7 +29,7 @@ export function AdminSettings() {
   });
   const [saved, setSaved] = useState(false);
 
-  const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k: keyof typeof form, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }));
 
   const save = () => {
     update((d) => {
@@ -37,7 +39,10 @@ export function AdminSettings() {
           ...d.settings,
           name: form.name.trim() || d.settings.name,
           tagline: form.tagline.trim(),
-          logo: form.logo.trim() || d.settings.logo,
+          // Empty value = REMOVE the logo/favicon (intentional — no fallback).
+          logo: form.logo.trim(),
+          favicon: form.favicon.trim(),
+          socialVisible: form.socialVisible,
           footerAbout: form.footerAbout.trim(),
           copyright: form.copyright.trim(),
           liveUrl: form.liveUrl.trim(),
@@ -56,16 +61,23 @@ export function AdminSettings() {
 
   return (
     <div className="space-y-4">
-      <Card title="Site Identity" subtitle="Shown in the header logo, footer and browser tab.">
+      <Card title="Site Identity" subtitle="Shown in the header logo, footer and browser tab. Clear the field and Save to remove.">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <TInput label="Site Name" value={form.name} onChange={(v) => set("name", v)} />
           <TInput label="Tagline" value={form.tagline} onChange={(v) => set("tagline", v)} />
           <div className="md:col-span-2">
-            <ImageInput label="Logo" value={form.logo} onChange={(v) => set("logo", v)} previewHeight={48} />
+            <ImageInput label="Logo (clear + Save = remove)" value={form.logo} onChange={(v) => set("logo", v)} previewHeight={48} preset="logo" folder="site" />
+          </div>
+          <div className="md:col-span-2">
+            <ImageInput label="Favicon (browser tab icon — clear + Save = remove)" value={form.favicon} onChange={(v) => set("favicon", v)} previewHeight={32} preset="icon" folder="site" />
           </div>
           <TArea label="Footer About Text" value={form.footerAbout} onChange={(v) => set("footerAbout", v)} rows={2} />
           <TInput label="Footer Copyright Line" value={form.copyright} onChange={(v) => set("copyright", v)} />
           <TInput label="Live Stream URL (YouTube)" value={form.liveUrl} onChange={(v) => set("liveUrl", v)} placeholder="https://www.youtube.com/watch?v=..." />
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-4 py-3">
+            <input type="checkbox" checked={form.socialVisible} onChange={(e) => set("socialVisible", e.target.checked)} className="h-4 w-4 accent-orange-500" />
+            <span className="text-[13px] font-semibold text-slate-700">Show Social Follow icons (sidebar, footer, menu)</span>
+          </label>
         </div>
       </Card>
 
@@ -157,6 +169,7 @@ export function AdminPassword() {
   const [current, setCurrent] = useState("");
   const [nextId, setNextId] = useState("");
   const [next, setNext] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -200,21 +213,116 @@ export function AdminPassword() {
   };
 
   return (
+    <div className="space-y-4">
+      <Card
+        title="Admin Login (ID + Password)"
+        subtitle="Only this ID + password can open the admin panel"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
+          <TInput label="Admin ID" value={nextId} onChange={setNextId} placeholder={loading ? "Loading…" : "admin"} />
+          <div>
+            <span className="block text-[13px] font-semibold text-slate-700 mb-1">Current Password (required to save)</span>
+            <div className="relative">
+              <input type={showPass ? "text" : "password"} value={current} onChange={(e) => setCurrent(e.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pr-10 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition" />
+              <button type="button" onClick={() => setShowPass((v) => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" aria-label={showPass ? "Hide password" : "Show password"}>
+                {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+          </div>
+          <TInput label="New Password (leave blank to keep)" value={next} onChange={setNext} type={showPass ? "text" : "password"} />
+        </div>
+        {msg && <p className={`mt-3 text-[13px] font-medium ${msg.ok ? "text-green-600" : "text-red-500"}`}>{msg.text}</p>}
+        <div className="mt-4">
+          <Btn onClick={() => void change()} disabled={!current || !nextId.trim()}>
+            Update Login
+          </Btn>
+        </div>
+      </Card>
+
+      <AdminEmails />
+    </div>
+  );
+}
+
+/** Email-based admin logins (Firebase Auth) — allowlist managed here. */
+function AdminEmails() {
+  const [emails, setEmails] = useState<string[]>([]);
+  const [newEmail, setNewEmail] = useState("");
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/emails", { cache: "no-store" });
+        if (res.ok) {
+          const json = (await res.json()) as { emails: string[] };
+          setEmails(json.emails ?? []);
+        }
+      } catch {
+        /* ignore */
+      } finally {
+        setLoading(false);
+      }
+    })();
+  };
+
+  useEffect(load, []);
+
+  const updateList = async (email: string, allowed: boolean) => {
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/emails", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, allowed }),
+      });
+      const json = (await res.json()) as { ok: boolean; emails?: string[]; error?: string };
+      if (res.ok && json.emails) {
+        setEmails(json.emails);
+        setMsg({ ok: true, text: allowed ? `${email} can now log in with email + password.` : `${email} removed.` });
+        setNewEmail("");
+      } else {
+        setMsg({ ok: false, text: json.error || "Update failed." });
+      }
+    } catch {
+      setMsg({ ok: false, text: "Server unreachable — try again." });
+    }
+  };
+
+  return (
     <Card
-      title="Admin Login (ID + Password)"
-      subtitle="Only this ID + password can open the admin panel"
+      title="Email Logins (Firebase Auth)"
+      subtitle="Add an email, then log in on the panel with that email + any password (min 6 chars). 'Forgot password' sends a reset link to the email."
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
-        <TInput label="Admin ID" value={nextId} onChange={setNextId} placeholder={loading ? "Loading…" : "admin"} />
-        <TInput label="Current Password (required to save)" value={current} onChange={setCurrent} type="password" />
-        <TInput label="New Password (leave blank to keep)" value={next} onChange={setNext} type="password" />
-      </div>
-      {msg && <p className={`mt-3 text-[13px] font-medium ${msg.ok ? "text-green-600" : "text-red-500"}`}>{msg.text}</p>}
-      <div className="mt-4">
-        <Btn onClick={() => void change()} disabled={!current || !nextId.trim()}>
-          Update Login
+      <div className="flex gap-2 max-w-xl">
+        <input
+          type="email"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          placeholder="admin@example.com"
+          className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition"
+        />
+        <Btn onClick={() => void updateList(newEmail.trim(), true)} disabled={!newEmail.trim()}>
+          <Plus size={13} /> Add Email
         </Btn>
       </div>
+      {msg && <p className={`mt-3 text-[13px] font-medium ${msg.ok ? "text-green-600" : "text-red-500"}`}>{msg.text}</p>}
+      <div className="mt-4 max-w-xl space-y-2">
+        {loading && <p className="text-[13px] text-slate-400">Loading…</p>}
+        {!loading && emails.length === 0 && <p className="text-[13px] text-slate-400">No email logins added yet — abhi sirf Admin ID + password se login hota hai.</p>}
+        {emails.map((email) => (
+          <div key={email} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2">
+            <span className="truncate text-[13px] font-semibold text-slate-700">{email}</span>
+            <button type="button" onClick={() => void updateList(email, false)} className="shrink-0 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-600 hover:bg-red-100">
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-[11px] text-slate-400">
+        Password reset: panel ke login screen par "Forgot password?" — Firebase khud email par secure reset link bhejta hai.
+      </p>
     </Card>
   );
 }

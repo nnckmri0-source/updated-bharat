@@ -81,7 +81,7 @@ export default function AdminNews() {
             <TArea label="Description (SEO excerpt) — 150-160 chars" value={form.description} onChange={(v) => setForm({ ...form, description: v })} rows={2} placeholder="Short summary shown under title and in Google results…" hint={`${form.description.length}/320 chars — shown under title + meta description`} />
           </div>
           <div className="md:col-span-2">
-            <ImageInput label="Cover Image" value={form.image} onChange={(v) => setForm({ ...form, image: v })} previewHeight={90} />
+            <ImageInput label="Cover Image" value={form.image} onChange={(v) => setForm({ ...form, image: v })} previewHeight={90} preset="cover" folder="news" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
             <TInput label="Cover Alt Text" value={form.imageAlt} onChange={(v) => setForm({ ...form, imageAlt: v })} placeholder="Alt for SEO & accessibility" />

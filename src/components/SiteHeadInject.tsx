@@ -27,6 +27,21 @@ export default function SiteHeadInject() {
   }, []);
 
   useEffect(() => {
+    // 0) Admin favicon — replaces the static /favicon.ico when set
+    const id = "ub-admin-favicon";
+    let link = document.getElementById(id) as HTMLLinkElement | null;
+    if (settings.favicon) {
+      if (!link) {
+        link = document.createElement("link");
+        link.id = id;
+        link.rel = "icon";
+        document.head.appendChild(link);
+      }
+      if (link.href !== settings.favicon) link.href = settings.favicon;
+    } else if (link) {
+      link.remove();
+    }
+
     // 1) Google AdSense — header script (auto ads)
     if (settings.adsenseHeaderCode && !document.getElementById("ub-adsense-header")) {
       const holder = document.createElement("div");
@@ -59,7 +74,7 @@ export default function SiteHeadInject() {
       document.head.appendChild(s);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.adsenseHeaderCode, settings.onesignalAppId]);
+  }, [settings.favicon, settings.adsenseHeaderCode, settings.onesignalAppId]);
 
   return null;
 }

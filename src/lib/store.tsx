@@ -50,6 +50,8 @@ type StoreValue = {
   reset: () => void;
   /** null = checking, false = API unreachable / not configured, true = live backend */
   backendReady: boolean | null;
+  /** false until the first data source has loaded — pages show loading, not "not found" */
+  hydrated: boolean;
 };
 
 const SiteDataContext = createContext<StoreValue | null>(null);
@@ -84,6 +86,9 @@ function stripCredentialsFromRemote(remote: Partial<SiteData>): Partial<SiteData
 export function SiteDataProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<SiteData>(() => buildDefaults());
   const [backendReady, setBackendReady] = useState<boolean | null>(null);
+  // False until the first data source (API/Firebase/localStorage) has loaded —
+  // pages render a loading state instead of "not found" while this is false.
+  const [hydrated, setHydrated] = useState(false);
 
   // Hydrate after first paint: SSR renders defaults so the initial HTML always
   // matches. Then apply the localStorage cache, then pull from the API, then
@@ -124,7 +129,12 @@ export function SiteDataProvider({ children }: { children: React.ReactNode }) {
           return next;
         });
       }
+      setHydrated(true);
+    }).catch(() => {
+      if (!cancelled) setHydrated(true);
     });
+    // Offline safety: never keep pages stuck on the loading state.
+    const readyTimer = setTimeout(() => { if (!cancelled) setHydrated(true); }, 6000);
 
     if (FIREBASE_READY) {
       const db = getDb();
@@ -137,6 +147,7 @@ export function SiteDataProvider({ children }: { children: React.ReactNode }) {
             const raw = (snap.val() as Partial<SiteData> | null) ?? null;
             if (!raw || !raw.news?.length) return; // empty node — server seeds it via GET /api/site
             const remote = stripCredentialsFromRemote(raw);
+            setHydrated(true);
             setData((prev) => {
               const next = mergeRemote(prev, remote);
               try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* */ }
@@ -147,12 +158,14 @@ export function SiteDataProvider({ children }: { children: React.ReactNode }) {
         );
         return () => {
           cancelled = true;
+          clearTimeout(readyTimer);
           unsub();
         };
       }
     }
     return () => {
       cancelled = true;
+      clearTimeout(readyTimer);
     };
   }, []);
 
@@ -205,7 +218,7 @@ export function SiteDataProvider({ children }: { children: React.ReactNode }) {
     }).catch(() => { /* offline — local reset only */ });
   }, []);
 
-  const value = useMemo(() => ({ data, update, reset, backendReady }), [data, update, reset, backendReady]);
+  const value = useMemo(() => ({ data, update, reset, backendReady, hydrated }), [data, update, reset, backendReady, hydrated]);
   return <SiteDataContext.Provider value={value}>{children}</SiteDataContext.Provider>;
 }
 

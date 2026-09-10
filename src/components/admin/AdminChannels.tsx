@@ -65,7 +65,7 @@ export default function AdminChannels() {
           <TInput label="Name *" value={form.name} onChange={(v) => setForm({ ...form, name: v, slug: editingSlug ? form.slug : slugify(v) })} />
           <TInput label="Slug (URL)" value={form.slug} onChange={(v) => setForm({ ...form, slug: v })} hint="channel/{slug}" />
           <div className="md:col-span-2">
-            <ImageInput label="Icon" value={form.icon} onChange={(v) => setForm({ ...form, icon: v })} previewHeight={48} hint="Small square icon shown in the nav (optional)" />
+            <ImageInput label="Icon" value={form.icon} onChange={(v) => setForm({ ...form, icon: v })} previewHeight={48} preset="icon" folder="icons" hint="Small square icon shown in the nav (optional)" />
           </div>
           <div className="md:col-span-2">
             <TInput label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Your Trusted News Source" />

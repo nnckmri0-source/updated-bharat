@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Zap, PlayCircle } from "lucide-react";
+import { Zap, PlayCircle } from "lucide-react";
 import { useSiteData, type NewsArticle } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 import WebStoriesRow from "@/components/WebStoriesRow";
@@ -108,26 +108,22 @@ export default function HomePage() {
       <div style={{ flex: 1, minWidth: 0 }}>
         <WebStoriesRow stories={stories.slice(0, 6)} />
 
-        {/* Hero Section */}
+        {/* Hero Section — clean image, headline below (no overlay) */}
         {heroArticle && (
           <div className="widget-box mb-3">
-            <div className="hero-card">
-              {heroArticle.image ? (
-                <img src={heroArticle.image} alt={heroArticle.title} fetchPriority="high" />
-              ) : (
-                <div style={{ width: "100%", height: "100%", position: "absolute", inset: 0, background: "var(--orange-light)" }} />
-              )}
-              <div className="hero-overlay">
-                {heroArticle.channelName && <span className="badge-channel mb-2">{heroArticle.channelName}</span>}
-                <h2 className="hero-title">
-                  <a href={`/news/${heroArticle.slug}`} style={{ color: "#fff", textDecoration: "none" }}>
-                    {heroArticle.title}
-                  </a>
-                </h2>
-                <div className="hero-meta">
-                  <Clock size={12} /> {heroArticle.date}
-                </div>
-              </div>
+            <div>
+              <a href={`/news/${heroArticle.slug}`} style={{ display: "block", aspectRatio: "16/9", overflow: "hidden", position: "relative" }}>
+                {heroArticle.image ? (
+                  <img src={heroArticle.image} alt={heroArticle.title} fetchPriority="high" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", background: "var(--orange-light)" }} />
+                )}
+              </a>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, lineHeight: 1.35, margin: 0, padding: "12px 14px" }}>
+                <a href={`/news/${heroArticle.slug}`} style={{ color: "var(--text)", textDecoration: "none" }}>
+                  {heroArticle.title}
+                </a>
+              </h2>
             </div>
 
             {/* Sub-featured posts */}
@@ -146,12 +142,8 @@ export default function HomePage() {
                     )}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    {a.channelName && <span style={{ fontSize: "0.65rem", fontWeight: 700, color: "var(--orange)", textTransform: "uppercase" }}>{a.channelName}</span>}
-                    <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text)", lineHeight: 1.35, marginTop: 3 }} className="line-clamp-3">
+                    <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text)", lineHeight: 1.35 }} className="line-clamp-3">
                       {a.title}
-                    </div>
-                    <div style={{ fontSize: "0.72rem", color: "var(--text-light)", marginTop: 5, display: "flex", alignItems: "center", gap: 4 }}>
-                      <Clock size={10} /> {a.date}
                     </div>
                   </div>
                 </a>

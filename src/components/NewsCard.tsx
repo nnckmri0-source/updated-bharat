@@ -1,4 +1,3 @@
-import { Clock } from "lucide-react";
 import type { NewsArticle } from "@/data/news";
 
 export default function NewsCard({ article }: { article: NewsArticle }) {
@@ -12,14 +11,8 @@ export default function NewsCard({ article }: { article: NewsArticle }) {
         )}
       </a>
       <div className="card-body">
-        {article.channelName && (
-          <span className="badge-channel" style={{ marginBottom: 5, display: "inline-block" }}>{article.channelName}</span>
-        )}
         <div className="card-title">
           <a href={`/news/${article.slug}`} style={{ color: "inherit", textDecoration: "none" }}>{article.title}</a>
-        </div>
-        <div className="card-meta">
-          <Clock size={12} /> {article.date}
         </div>
       </div>
     </div>

@@ -19,7 +19,7 @@ export default function Footer() {
       <div className="footer-brand-strip">
         <div className="container" style={{ maxWidth: 1560, margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div className="footer-brand-name">{settings.name}</div>
-          <SocialButtons social={settings.social} variant="strip" />
+          {settings.socialVisible !== false && <SocialButtons social={settings.social} variant="strip" />}
         </div>
       </div>
 
@@ -33,7 +33,7 @@ export default function Footer() {
               <div className="footer-heading" style={{ fontSize: "0.95rem" }}>{settings.name}</div>
               <p className="footer-about" style={{ marginTop: 4 }}>{settings.footerAbout}</p>
               <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-                <SocialButtons social={settings.social} variant="strip" size={15} />
+                {settings.socialVisible !== false && <SocialButtons social={settings.social} variant="strip" size={15} />}
               </div>
             </div>
 

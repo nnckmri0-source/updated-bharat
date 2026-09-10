@@ -41,7 +41,7 @@ export default function LeftSidebar() {
 
       <div className="sidebar-app-section">
         <div className="sidebar-app-label">{t("followUs")}</div>
-        <SocialButtons social={settings.social} />
+        {settings.socialVisible !== false && <SocialButtons social={settings.social} />}
       </div>
 
       {/* Top Stories — fills the left column space with useful content */}

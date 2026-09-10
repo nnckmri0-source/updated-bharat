@@ -17,6 +17,8 @@ import {
   LogOut,
   ExternalLink,
   BarChart3,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useSiteData, ADMIN_AUTH_KEY } from "@/lib/store";
 import AdminDashboard from "@/components/admin/AdminDashboard";
@@ -52,7 +54,12 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+  const [errorText, setErrorText] = useState("");
+  const [resetMode, setResetMode] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetMsg, setResetMsg] = useState("");
+  const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState("dashboard");
 
   useEffect(() => {
@@ -80,22 +87,49 @@ export default function AdminPage() {
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
     // Server-side check ONLY: credentials are verified against Firebase (Admin
-    // SDK) and a signed HttpOnly session cookie is issued for API writes.
-    setError(false);
+    // SDK / Firebase Auth) and a signed HttpOnly session cookie is issued.
+    setErrorText("");
+    setBusy(true);
     try {
+      const identifier = username.trim();
+      const isMail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password }),
+        body: JSON.stringify(isMail ? { email: identifier, password } : { username: identifier, password }),
       });
       if (res.ok) {
         setAuthed(true);
         return;
       }
-      setError(true);
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      setErrorText(json.error || "Wrong ID/email or password — try again.");
     } catch {
-      // API unreachable — without the server there is no way to verify login.
-      setError(true);
+      setErrorText("Server unreachable — try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const sendReset = async () => {
+    setResetMsg("");
+    if (!resetEmail.trim()) {
+      setResetMsg("Enter your email first.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/reset-password", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: resetEmail.trim() }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
+      setResetMsg(json.message || json.error || (res.ok ? "Reset link sent." : "Could not send reset email."));
+    } catch {
+      setResetMsg("Server unreachable — try again.");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -122,35 +156,73 @@ export default function AdminPage() {
               <h1 className="text-lg font-extrabold text-slate-800">Admin Panel</h1>
               <p className="mt-1 text-[12px] text-slate-400">Manage {data.settings.name} — everything on the site</p>
             </div>
-            <form onSubmit={login} className="space-y-3">
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  setError(false);
-                }}
-                placeholder="Admin ID"
-                autoFocus
-                autoComplete="username"
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
-              />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError(false);
-                }}
-                placeholder="Admin password"
-                autoComplete="current-password"
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
-              />
-              {error && <p className="text-[12px] font-medium text-red-500">Wrong ID or password — try again.</p>}
-              <button type="submit" className="w-full rounded-xl bg-orange-500 py-2.5 text-sm font-bold text-white transition hover:bg-orange-600">
-                Login to Admin
-              </button>
-            </form>
+            {resetMode ? (
+              <div className="space-y-3">
+                <p className="text-[12px] text-slate-500">Enter your admin email — Firebase will send a password reset link to it.</p>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => {
+                    setResetEmail(e.target.value);
+                    setResetMsg("");
+                  }}
+                  placeholder="admin@example.com"
+                  autoFocus
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                />
+                {resetMsg && <p className={`text-[12px] font-medium ${resetMsg.includes("sent") ? "text-green-600" : "text-red-500"}`}>{resetMsg}</p>}
+                <button type="button" onClick={() => void sendReset()} disabled={busy} className="w-full rounded-xl bg-orange-500 py-2.5 text-sm font-bold text-white transition hover:bg-orange-600 disabled:opacity-60">
+                  {busy ? "Sending…" : "Send Reset Link"}
+                </button>
+                <button type="button" onClick={() => { setResetMode(false); setResetMsg(""); }} className="w-full text-[12px] font-semibold text-slate-400 hover:text-slate-600">
+                  ← Back to login
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={login} className="space-y-3">
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    setErrorText("");
+                  }}
+                  placeholder="Admin ID ya Email"
+                  autoFocus
+                  autoComplete="username"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                />
+                <div className="relative">
+                  <input
+                    type={showPass ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setErrorText("");
+                    }}
+                    placeholder="Password"
+                    autoComplete="current-password"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2.5 pr-11 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass((v) => !v)}
+                    aria-label={showPass ? "Hide password" : "Show password"}
+                    title={showPass ? "Hide password" : "Show password"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {errorText && <p className="text-[12px] font-medium text-red-500">{errorText}</p>}
+                <button type="submit" disabled={busy} className="w-full rounded-xl bg-orange-500 py-2.5 text-sm font-bold text-white transition hover:bg-orange-600 disabled:opacity-60">
+                  {busy ? "Logging in…" : "Login to Admin"}
+                </button>
+                <button type="button" onClick={() => setResetMode(true)} className="w-full text-[12px] font-semibold text-slate-400 hover:text-orange-500">
+                  Forgot password? (email par reset link bhejo)
+                </button>
+              </form>
+            )}
             <Link href="/" className="mt-4 block text-center text-[12px] font-semibold text-orange-500 hover:underline">
               ← Back to website
             </Link>

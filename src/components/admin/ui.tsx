@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Upload, X, Save } from "lucide-react";
+import { Upload, X, Save, Loader2 } from "lucide-react";
+import { compressImage, uploadCompressedImage, IMAGE_PRESET_HINT, type ImagePreset } from "@/lib/image-compress";
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -89,33 +90,52 @@ export function TSelect({
   return label ? <Field label={label}>{select}</Field> : select;
 }
 
-/** URL/text input + file upload (becomes base64 data-URL) + live preview. */
+/**
+ * URL/text input + Upload button + live preview.
+ * Uploads are compressed to a tiny WebP (see image-compress.ts presets) and
+ * pushed to Firebase Storage — the value saved in the DB is a small URL, and
+ * on upload failure it falls back to the compressed data-URL so nothing breaks
+ * offline.
+ */
 export function ImageInput({
   label,
   value,
   onChange,
   hint,
   previewHeight = 64,
+  preset = "cover",
+  folder = "misc",
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   hint?: string;
   previewHeight?: number;
+  preset?: ImagePreset;
+  folder?: string;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [tooBig, setTooBig] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
 
-  const onFile = (file?: File | null) => {
+  const onFile = async (file?: File | null) => {
     if (!file) return;
-    if (file.size > 900 * 1024) {
-      setTooBig(true);
-      return;
+    setErr("");
+    setBusy(true);
+    try {
+      const dataUrl = await compressImage(file, preset);
+      let final = dataUrl;
+      try {
+        final = await uploadCompressedImage(dataUrl, file.name, folder);
+      } catch {
+        // Server/Storage unavailable — keep the compressed data-URL (small).
+      }
+      onChange(final);
+    } catch (e) {
+      setErr((e as Error).message || "Image could not be processed");
+    } finally {
+      setBusy(false);
     }
-    setTooBig(false);
-    const reader = new FileReader();
-    reader.onload = () => onChange(String(reader.result ?? ""));
-    reader.readAsDataURL(file);
   };
 
   return (
@@ -132,10 +152,11 @@ export function ImageInput({
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50"
-          title="Upload image (saved as base64)"
+          disabled={busy}
+          className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+          title={`Upload image (${IMAGE_PRESET_HINT[preset]}, stored in Firebase Storage)`}
         >
-          <Upload size={14} /> Upload
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Upload
         </button>
         {value && (
           <button
@@ -154,11 +175,11 @@ export function ImageInput({
         accept="image/*"
         className="hidden"
         onChange={(e) => {
-          onFile(e.target.files?.[0]);
+          void onFile(e.target.files?.[0]);
           e.target.value = "";
         }}
       />
-      {tooBig && <span className="block text-[11px] text-red-500 mt-1">Image too large (max 900KB) — paste a URL instead.</span>}
+      {err && <span className="block text-[11px] text-red-500 mt-1">{err}</span>}
       {value && (
         <div className="mt-2">
           <img

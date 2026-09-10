@@ -245,7 +245,7 @@ export default function Header() {
           {/* Follow (Mobile Offcanvas) */}
           <div className="sidebar-app-section" style={{ paddingBottom: 20 }}>
             <div className="sidebar-app-label">{t("followUs")}</div>
-            <SocialButtons social={settings.social} />
+            {settings.socialVisible !== false && <SocialButtons social={settings.social} />}
           </div>
         </div>
       </div>

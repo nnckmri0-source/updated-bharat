@@ -70,7 +70,7 @@ export default function AdminStories() {
           <TInput label="Slug" value={form.slug} onChange={(v) => setForm({ ...form, slug: v })} hint="/visualstories/{slug} — auto from title" />
           <TInput label="Category" value={form.category} onChange={(v) => setForm({ ...form, category: v })} placeholder="Technology" />
           <div className="md:col-span-2">
-            <ImageInput label="Cover Image (9:16)" value={form.image} onChange={(v) => setForm({ ...form, image: v })} previewHeight={140} hint="Shown in homepage row & grid — 9:16 vertical" />
+            <ImageInput label="Cover Image (9:16)" value={form.image} onChange={(v) => setForm({ ...form, image: v })} previewHeight={140} preset="story" folder="stories" hint="Shown in homepage row & grid — 9:16 vertical" />
           </div>
           <div className="md:col-span-2">
             <TArea label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} rows={2} placeholder="One-line description shown under title in grid" />
@@ -88,7 +88,7 @@ export default function AdminStories() {
               {form.slides.map((sl, idx) => (
                 <div key={idx} className="rounded-xl border border-slate-200 p-3 flex gap-3">
                   <div className="w-24 shrink-0">
-                    <ImageInput label={`Slide ${idx + 1} Image`} value={sl.image ?? ""} onChange={(v) => updateSlide(idx, { image: v })} previewHeight={80} />
+                    <ImageInput label={`Slide ${idx + 1} Image`} value={sl.image ?? ""} onChange={(v) => updateSlide(idx, { image: v })} previewHeight={80} preset="story" folder="stories" />
                   </div>
                   <div className="flex-1 grid grid-cols-1 gap-2">
                     <TInput value={sl.title ?? ""} onChange={(v) => updateSlide(idx, { title: v })} placeholder="Slide title" />
