@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Search, Play, Bookmark } from "lucide-react";
+import { Home, Play, Bookmark, Newspaper } from "lucide-react";
 import { useLang, t } from "@/lib/i18n";
 
 export default function MobileBottomNav() {
@@ -12,9 +12,9 @@ export default function MobileBottomNav() {
         <Home size={18} />
         <span>{t("home")}</span>
       </Link>
-      <Link href="/search" className="mobile-nav-item">
-        <Search size={18} />
-        <span>{t("search")}</span>
+      <Link href="/latest" className="mobile-nav-item">
+        <Newspaper size={18} />
+        <span>{t("latestNews")}</span>
       </Link>
       <Link href="/web-stories" className="mobile-nav-item">
         <Play size={18} />
