@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Zap, PlayCircle } from "lucide-react";
-import { useSiteData, type NewsArticle } from "@/lib/store";
+import { Zap } from "lucide-react";
+import { useSiteData, DEFAULT_DISPLAY, type NewsArticle } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 import WebStoriesRow from "@/components/WebStoriesRow";
 import NewsCard from "@/components/NewsCard";
@@ -45,9 +45,6 @@ export function VideoWidget({ items }: { items: NewsArticle[] }) {
       <div style={{ display: "grid", gap: 8 }}>
         <a href={`/news/${big.slug}`} className="hero-card" style={{ display: "block", height: 220, textDecoration: "none" }}>
           {big.image ? <img src={big.image} alt={big.title} style={{ height: "100%", width: "100%", objectFit: "cover", opacity: 0.8 }} loading="lazy" decoding="async" /> : <div style={{ height: "100%", width: "100%", background: "#222" }} />}
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", color: "#fff" }}>
-            <PlayCircle size={44} fill="rgba(255,255,255,.25)" />
-          </div>
           <div className="hero-overlay">
             <div className="hero-title" style={{ fontSize: "1rem", WebkitLineClamp: 2 }}>{big.title}</div>
           </div>
@@ -56,9 +53,6 @@ export function VideoWidget({ items }: { items: NewsArticle[] }) {
           {small.slice(0, 3).map((a) => (
             <a key={a.slug} href={`/news/${a.slug}`} className="hero-card" style={{ display: "block", height: 80, textDecoration: "none" }}>
               {a.image ? <img src={a.image} alt={a.title} style={{ height: "100%", width: "100%", objectFit: "cover", opacity: 0.8 }} loading="lazy" decoding="async" /> : <div style={{ height: "100%", width: "100%", background: "#222" }} />}
-              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", color: "#fff" }}>
-                <PlayCircle size={20} fill="rgba(255,255,255,.25)" />
-              </div>
               <div className="hero-overlay" style={{ padding: 8 }}>
                 <div className="hero-title" style={{ fontSize: "0.65rem", WebkitLineClamp: 2, marginBottom: 0 }}>{a.title}</div>
               </div>
@@ -73,7 +67,8 @@ export function VideoWidget({ items }: { items: NewsArticle[] }) {
 export default function HomePage() {
   useLang(); // re-render labels on language switch
   const { data } = useSiteData();
-  const { news, channels, stories, home } = data;
+  const { news, channels, stories, home, settings } = data;
+  const display = settings.display ?? DEFAULT_DISPLAY;
 
   const byChannel = (slug: string | null) => news.filter((n) => n.channel === slug);
   const getChannelName = (slug: string | null) => channels.find((c) => c.slug === slug)?.name ?? slug ?? "";
@@ -92,24 +87,25 @@ export default function HomePage() {
     const used = new Set([heroArticle?.slug, ...subFeatured.map((n) => n.slug)]);
     subFeatured = [...subFeatured, ...sorted.filter((n) => !used.has(n.slug))].slice(0, 3);
   }
+  const latestCount = display.latestCount ?? 6;
   let latestGrid = home.latestGrid
     .map((s) => news.find((n) => n.slug === s))
     .filter(Boolean) as typeof news;
-  if (latestGrid.length < 6) {
+  if (latestGrid.length < latestCount) {
     const used = new Set([heroArticle?.slug, ...subFeatured.map((n) => n.slug), ...latestGrid.map((n) => n.slug)]);
-    latestGrid = [...latestGrid, ...sorted.filter((n) => !used.has(n.slug))].slice(0, 6);
+    latestGrid = [...latestGrid, ...sorted.filter((n) => !used.has(n.slug))].slice(0, latestCount);
   } else {
-    latestGrid = latestGrid.slice(0, 6);
+    latestGrid = latestGrid.slice(0, latestCount);
   }
 
   return (
     <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
       {/* MAIN FEED */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <WebStoriesRow stories={stories.slice(0, 6)} />
+        {display.showStoriesRow !== false && <WebStoriesRow stories={stories.slice(0, display.storiesCount ?? 6)} />}
 
         {/* Hero Section — clean image, headline below (no overlay) */}
-        {heroArticle && (
+        {display.showHero !== false && heroArticle && (
           <div className="widget-box mb-3">
             <div>
               <a href={`/news/${heroArticle.slug}`} style={{ display: "block", aspectRatio: "16/9", overflow: "hidden", position: "relative" }}>
@@ -198,9 +194,11 @@ export default function HomePage() {
         <AdSlot />
 
         {/* Poll — mobile/tablet (desktop shows it in the sidebar) */}
+        {display.showPoll !== false && (
         <div className="d-lg-none">
           <PollWidget />
         </div>
+        )}
       </div>
 
       {/* RIGHT SIDEBAR */}

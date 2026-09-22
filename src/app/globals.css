@@ -1030,9 +1030,10 @@ img {
 
 /* ---------- footer ---------- */
 .site-footer {
-  background: var(--navy);
-  color: rgba(255, 255, 255, 0.8);
+  background: #fff;
+  color: var(--text-muted);
   margin-top: auto;
+  border-top: 1px solid var(--border);
 }
 .footer-brand-strip {
   background: var(--orange);
@@ -1087,7 +1088,7 @@ img {
   }
 }
 .footer-heading {
-  color: #fff;
+  color: var(--text);
   font-size: 0.85rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -1101,18 +1102,18 @@ img {
 }
 .footer-link {
   display: block;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-muted);
   font-size: 0.875rem;
   padding: 5px 0;
   transition: all 0.15s;
 }
 .footer-link:hover {
-  color: #fff;
+  color: var(--orange);
   padding-left: 6px;
 }
 .footer-about {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-muted);
   line-height: 1.7;
 }
 .footer-newsletter-form {
@@ -1126,9 +1127,9 @@ img {
   min-width: 0;
   padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  color: var(--text);
   font-size: 0.8rem;
   outline: none;
 }
@@ -1146,23 +1147,23 @@ img {
   gap: 5px;
 }
 .footer-tag-link {
-  font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 4px 10px;
-  border-radius: 14px;
-  transition: all 0.15s;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 2px 0;
+  margin-right: 14px;
+  transition: color 0.15s;
 }
 .footer-tag-link:hover {
   color: var(--orange);
-  border-color: var(--orange);
 }
 .footer-bottom-bar {
-  background: rgba(0, 0, 0, 0.3);
+  background: #f8fafc;
   padding: 16px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border);
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 }
 
 /* ---------- mobile header (must come AFTER base header rules) ---------- */

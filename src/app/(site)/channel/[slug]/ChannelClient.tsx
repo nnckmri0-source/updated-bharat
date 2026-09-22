@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { Clock, Share2 } from "lucide-react";
-import { useSiteData } from "@/lib/store";
+import { useSiteData, type Channel, type NewsArticle } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 
-export default function ChannelClient({ slug }: { slug: string }) {
+export default function ChannelClient({ slug, initialChannel, initialItems }: { slug: string; initialChannel?: Channel | null; initialItems?: NewsArticle[] }) {
   useLang(); // re-render labels on language switch
   const { data, hydrated } = useSiteData();
   const { channels, news } = data;
-  const channel = channels.find((c) => c.slug === slug);
+  const channel = initialChannel ?? channels.find((c) => c.slug === slug);
 
   if (!channel) {
     // While the live data is still loading, show a spinner — not "not found".
@@ -31,7 +31,10 @@ export default function ChannelClient({ slug }: { slug: string }) {
     );
   }
 
-  const items = news.filter((n) => n.channel === slug);
+  // Server snapshot (first paint) wins until the live store hydrates — freshly
+  // published channels/posts render instantly with no "not found" flash.
+  const liveItems = news.filter((n) => n.channel === slug);
+  const items = hydrated ? liveItems : (initialItems ?? liveItems);
 
   const shareArticle = async (title: string, s: string) => {
     const url = `${window.location.origin}/news/${s}`;

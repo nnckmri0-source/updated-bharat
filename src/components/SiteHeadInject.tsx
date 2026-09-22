@@ -6,10 +6,26 @@
 
 import { useEffect } from "react";
 import { useSiteData } from "@/lib/store";
+import { firebaseConfig, FIREBASE_READY } from "@/lib/firebase";
 
 export default function SiteHeadInject() {
   const { data } = useSiteData();
   const { settings } = data;
+
+  // Preconnect to Firebase RTDB so the live listener + API resolve faster.
+  useEffect(() => {
+    if (!FIREBASE_READY || !firebaseConfig.databaseURL) return;
+    try {
+      const host = new URL(firebaseConfig.databaseURL).host;
+      if (!document.querySelector(`link[rel="preconnect"][data-ub="rtdb"]`)) {
+        const l = document.createElement("link");
+        l.rel = "preconnect";
+        l.href = `https://${host}`;
+        l.dataset.ub = "rtdb";
+        document.head.appendChild(l);
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
     const onImgErr = (e: Event) => {

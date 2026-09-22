@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Flame, Newspaper, History, Users, ChevronRight, TrendingUp, Mail, Tag } from "lucide-react";
-import { useSiteData } from "@/lib/store";
+import { useSiteData, DEFAULT_DISPLAY } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 import ZorventByline from "@/components/ZorventByline";
 import PollWidget from "@/components/PollWidget";
@@ -14,6 +14,8 @@ export default function RightSidebar() {
   useLang(); // re-render labels on language switch
   const { data } = useSiteData();
   const { news, settings, editions, trending, footer } = data;
+  const display = settings.display ?? DEFAULT_DISPLAY;
+  const showSocialWidgets = display.showSocial !== false && settings.socialVisible !== false;
   const sorted = [...news].sort((a, b) => (a.date < b.date ? 1 : -1));
   const latestNews = sorted.slice(0, 6);
   const mostRead = sorted.slice(0, 5);
@@ -23,6 +25,7 @@ export default function RightSidebar() {
   return (
     <div className="right-sidebar d-none d-lg-block">
       {/* Trending Now */}
+      {display.showTrending !== false && (
       <div className="widget-box mb-4">
         <div className="widget-title">
           <Flame size={15} /> {t("trendingNow")}
@@ -43,12 +46,13 @@ export default function RightSidebar() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Poll */}
-      <PollWidget />
+      {display.showPoll !== false && <PollWidget />}
 
       {/* E-Paper Widget */}
-      {edition && (
+      {display.showEpaper !== false && edition && (
         <div className="widget-box mb-4">
           <div className="widget-title">
             <Newspaper size={15} /> {t("epaper")}
@@ -92,7 +96,7 @@ export default function RightSidebar() {
       </div>
 
       {/* Social Follow */}
-      {settings.socialVisible !== false && (
+      {showSocialWidgets && (
       <div className="widget-box mb-4">
         <div className="widget-title">
           <Users size={15} /> {t("followUs")}
@@ -160,6 +164,7 @@ export default function RightSidebar() {
       </div>
 
       {/* Newsletter */}
+      {display.showNewsletter !== false && (
       <div className="widget-box mb-4" style={{ background: "var(--orange-light)", borderColor: "var(--orange)" }}>
         <div className="widget-title" style={{ background: "var(--orange)" }}>
           <Mail size={15} /> Newsletter
@@ -171,8 +176,10 @@ export default function RightSidebar() {
           <NewsletterForm />
         </div>
       </div>
+      )}
 
       {/* Tags */}
+      {display.showTagsWidget !== false && (
       <div className="widget-box mb-4">
         <div className="widget-title">
           <Tag size={15} /> Tags
@@ -185,12 +192,13 @@ export default function RightSidebar() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Sidebar Ads — real AdSense code when set, placeholder otherwise */}
       <div className="widget-box mb-4 text-center" style={{ padding: 8 }}>
         {settings.adsenseSidebarCode ? (
           <div dangerouslySetInnerHTML={{ __html: settings.adsenseSidebarCode }} />
-        ) : (
+        ) : display.showAds ? (
           <>
             <div className="ad-slot">
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "65%", gap: 4 }}>
@@ -207,7 +215,7 @@ export default function RightSidebar() {
               <ZorventByline />
             </div>
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );

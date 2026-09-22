@@ -6,11 +6,11 @@ import { useSiteData, slugify, norm, type NewsArticle } from "@/lib/store";
 import { Card, Btn, TInput, TArea, TSelect, ImageInput, EmptyState } from "./ui";
 import RichTextEditor from "./RichTextEditor";
 
-const emptyForm = { title: "", slug: "", channel: "", date: "", image: "", imageAlt: "", imageCaption: "", description: "", content: "" };
+const emptyForm = { title: "", slug: "", channel: "", author: "", date: "", image: "", imageAlt: "", imageCaption: "", description: "", content: "" };
 
 export default function AdminNews() {
   const { data, update } = useSiteData();
-  const { news, channels } = data;
+  const { news, channels, authors } = data;
   const [filter, setFilter] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export default function AdminNews() {
   };
 
   const openEdit = (a: NewsArticle) => {
-    setForm({ title: a.title, slug: a.slug, channel: a.channel ?? "", date: a.date, image: a.image ?? "", imageAlt: a.imageAlt ?? "", imageCaption: a.imageCaption ?? "", description: a.description ?? "", content: a.content });
+    setForm({ title: a.title, slug: a.slug, channel: a.channel ?? "", author: a.authorId ?? "", date: a.date, image: a.image ?? "", imageAlt: a.imageAlt ?? "", imageCaption: a.imageCaption ?? "", description: a.description ?? "", content: a.content });
     setEditingSlug(a.slug);
     setFormOpen(true);
   };
@@ -39,6 +39,7 @@ export default function AdminNews() {
       title: form.title.trim(),
       channel: channel?.slug ?? null,
       channelName: channel?.name ?? null,
+      authorId: form.author || null,
       date: form.date.trim() || "Today",
       description: form.description.trim(),
       content: form.content.trim() || form.title.trim(),
@@ -76,6 +77,7 @@ export default function AdminNews() {
           <TInput label="Title *" value={form.title} onChange={(v) => setForm({ ...form, title: v, slug: editingSlug ? form.slug : slugify(v) })} />
           <TInput label="Slug (URL)" value={form.slug} onChange={(v) => setForm({ ...form, slug: v })} hint="news/{slug} — auto-generated from title" />
           <TSelect label="Channel" value={form.channel} onChange={(v) => setForm({ ...form, channel: v })} options={channelOptions} />
+          <TSelect label="Author" value={form.author} onChange={(v) => setForm({ ...form, author: v })} options={[{ value: "", label: "— Site name —" }, ...authors.map((a) => ({ value: a.id, label: a.name }))]} />
           <TInput label="Date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} placeholder="Apr 23, 2026" />
           <div className="md:col-span-2">
             <TArea label="Description (SEO excerpt) — 150-160 chars" value={form.description} onChange={(v) => setForm({ ...form, description: v })} rows={2} placeholder="Short summary shown under title and in Google results…" hint={`${form.description.length}/320 chars — shown under title + meta description`} />

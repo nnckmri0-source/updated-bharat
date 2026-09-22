@@ -16,7 +16,7 @@ import {
   ChevronRight,
   ArrowLeft,
 } from "lucide-react";
-import { useSiteData, orderChannels, channelsBySlugList } from "@/lib/store";
+import { useSiteData, orderChannels, channelsBySlugList, DEFAULT_DISPLAY } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import NotificationBell from "@/components/NotificationBell";
 import CategoryIcon from "@/components/CategoryIcon";
@@ -25,6 +25,7 @@ import { SocialButtons } from "@/components/SocialRow";
 export default function Header() {
   const { data } = useSiteData();
   const { channels, settings, ticker, trending } = data;
+  const display = settings.display ?? DEFAULT_DISPLAY;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -119,6 +120,7 @@ export default function Header() {
           </div>
 
           {/* Breaking News Ticker (Desktop) */}
+          {display.showTicker !== false && (
           <div className="d-none d-md-block">
             <div className="breaking-ticker">
               <span className="ticker-label">
@@ -143,6 +145,7 @@ export default function Header() {
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {/* Mobile Scrolling Navs — Top News + categories */}

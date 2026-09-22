@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Clock, Share2, Calendar, BadgeCheck, FileQuestion } from "lucide-react";
-import { useSiteData } from "@/lib/store";
+import { useSiteData, DEFAULT_DISPLAY, type NewsArticle } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 import RightSidebar from "@/components/RightSidebar";
 import AdSlot from "@/components/AdSlot";
@@ -56,10 +56,11 @@ function RichHtml({ html }: { html: string }) {
   return <div className="rich-article" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-export default function NewsClient({ slug }: { slug: string }) {
+export default function NewsClient({ slug, initial }: { slug: string; initial?: NewsArticle | null }) {
   useLang(); // re-render labels on language switch
   const { data, hydrated } = useSiteData();
   const { news, channels, settings } = data;
+  const display = settings.display ?? DEFAULT_DISPLAY;
   const [zoom, setZoom] = useState(1);
   const textSizeBtn = {
     width: 30,
@@ -76,7 +77,9 @@ export default function NewsClient({ slug }: { slug: string }) {
     fontWeight: 700,
   };
 
-  const article = news.find((n) => n.slug === slug);
+  // Server snapshot (first paint) wins until the live store hydrates — freshly
+  // published posts render instantly with no "loading story" flash.
+  const article = hydrated ? (news.find((n) => n.slug === slug) ?? initial ?? null) : (initial ?? news.find((n) => n.slug === slug) ?? null);
 
   const shareThis = async () => {
     if (!article) return;
@@ -117,28 +120,31 @@ export default function NewsClient({ slug }: { slug: string }) {
   }
 
   const channel = channels.find((c) => c.slug === article.channel);
-  const related = news.filter((n) => n.channel === article.channel && n.slug !== slug).slice(0, 4);
+  const author = (data.authors ?? []).find((a) => a.id === article.authorId) ?? null;
+  const authorName = author?.name ?? settings.name;
+  const related = news.filter((n) => n.channel === article.channel && n.slug !== slug).slice(0, display.relatedCount ?? 4);
   const useHtml = isHtmlContent(article.content);
   const paragraphs = !useHtml ? article.content.split("\n\n").filter(Boolean) : [];
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (typeof window !== "undefined" ? window.location.origin : "https://bhaskar.naws.in");
   const shareUrl = `${baseUrl}/news/${article.slug}`;
 
   // Renders the real ad image when the admin uploaded one, otherwise the
-  // "Advertise Here" placeholder box.
+  // "Advertise Here" placeholder box (hidden while ads are switched off).
   const renderAd = (src: string, alt: string) =>
     src ? (
       <div style={{ margin: "20px 0", textAlign: "center" }}>
         <img src={src} className="img-fluid" alt={alt} style={{ maxWidth: "100%", height: "auto", borderRadius: 6 }} loading="lazy" decoding="async" />
       </div>
-    ) : (
+    ) : display.showAds ? (
       <AdSlot />
-    );
+    ) : null;
 
   return (
     <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <article className="article-wrapper">
           {/* Breadcrumb */}
+          {display.showBreadcrumbs !== false && (
           <nav aria-label="breadcrumb" style={{ marginBottom: 12, fontSize: "0.8rem" }}>
             <ol style={{ display: "flex", alignItems: "center", gap: 6, listStyle: "none", margin: 0, padding: 0 }}>
               <li>
@@ -156,6 +162,7 @@ export default function NewsClient({ slug }: { slug: string }) {
               <li style={{ color: "var(--text-muted)", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Article</li>
             </ol>
           </nav>
+          )}
 
           <h1 className="article-title mb-2">{article.title}</h1>
           {article.description && (
@@ -174,12 +181,16 @@ export default function NewsClient({ slug }: { slug: string }) {
           {/* Compact Branding Box */}
           <div className="border" style={{ borderRadius: 6, padding: 8, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, background: "var(--surface)", borderColor: "var(--border)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 38, height: 38, background: "#e63946", color: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
-                {settings.name.charAt(0).toUpperCase()}
-              </div>
+              {author?.image ? (
+                <img src={author.image} alt={authorName} style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }} />
+              ) : (
+                <div style={{ width: 38, height: 38, background: "#e63946", color: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+                  {authorName.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div style={{ lineHeight: 1.2 }}>
                 <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 4, color: "var(--text)", fontSize: "0.95rem" }}>
-                  {settings.name} <BadgeCheck size={13} style={{ color: "#3b82f6" }} />
+                  {authorName} {!author && <BadgeCheck size={13} style={{ color: "#3b82f6" }} />}
                 </div>
                 <small style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
                   <Calendar size={11} style={{ display: "inline", marginRight: 4 }} />
@@ -237,14 +248,16 @@ export default function NewsClient({ slug }: { slug: string }) {
 
           {/* Share block */}
           <AdSlot />
+          {display.showShareBlock !== false && (
           <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "16px 16px", marginBottom: 20, background: "var(--surface-2)" }}>              <h6 style={{ fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8, color: "var(--text)", fontSize: "0.9rem" }}>
               <Share2 size={14} /> {t("shareArticle")}
             </h6>
             <ShareButtons title={article.title} url={shareUrl} />
           </div>
+          )}
 
           {/* Related News */}
-          {related.length > 0 && (
+          {display.showRelated !== false && related.length > 0 && (
             <div className="related-section mb-5">
               <div className="section-head">
                 <div className="section-head-title">{t("relatedStories")}</div>

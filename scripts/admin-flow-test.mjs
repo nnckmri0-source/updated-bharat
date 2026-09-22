@@ -26,8 +26,13 @@ setTimeout(() => {
 async function main() {
   // --- spawn chrome with remote debugging ---
   const { spawn } = await import("node:child_process");
+  const os = await import("node:os");
+  const path = await import("node:path");
   const chromePath = process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-  const userData = "/tmp/cdp-profile-" + Date.now();
+  // NOTE: must be a valid OS temp path — a Unix-style /tmp path is ignored on
+  // Windows and Chrome silently falls back to the user's REAL profile (which
+  // may already hold an admin session, breaking the login-gate assertions).
+  const userData = path.join(os.tmpdir(), "cdp-profile-" + Date.now());
   const chrome = spawn(chromePath, [
     "--headless=new",
     "--disable-gpu",
@@ -88,6 +93,17 @@ async function main() {
     await sleepMs(1800);
   };
 
+  // Poll until a selector exists (dev compile + hydration can take a while)
+  const waitForSel = async (sel, timeoutMs = 25000) => {
+    const start = Date.now();
+    for (;;) {
+      const found = await evaluate(`!!document.querySelector(${JSON.stringify(sel)})`);
+      if (found) return true;
+      if (Date.now() - start > timeoutMs) return false;
+      await sleepMs(500);
+    }
+  };
+
   const results = [];
   const check = (name, ok, extra = "") => {
     results.push({ name, ok });
@@ -97,6 +113,7 @@ async function main() {
   try {
     // --- 1. admin login gate ---
     await nav(BASE + "/admin");
+    await waitForSel("form button[type=submit]");
     const gateText = await evaluate(`document.body.innerText.includes("Admin Panel")`);
     check("Admin login gate shows", gateText);
 
@@ -105,8 +122,12 @@ async function main() {
         Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set.call(el, val);
         el.dispatchEvent(new Event("input", { bubbles: true }));
       };
-      setVal(document.querySelector('input[placeholder="Admin Email"]'), "nnckmri0@gmail.com");
-      setVal(document.querySelector('input[type="password"]'), "UB#2026$Bharat!Admin");
+      // Credentials come from env so the real password never lives in git.
+      // Usage: $env:ADMIN_TEST_PASSWORD="..." ; npm run test:admin
+      const email = ${JSON.stringify(process.env.ADMIN_TEST_EMAIL ?? "nnckmri0@gmail.com")};
+      const pass = ${JSON.stringify(process.env.ADMIN_TEST_PASSWORD ?? "UB#2026$Bharat!Admin")};
+      setVal(document.querySelector('input[placeholder="Admin Email"]'), email);
+      setVal(document.querySelector('input[type="password"]'), pass);
       document.querySelector("form button[type=submit]").click();
     })()`);
     await sleepMs(1500);

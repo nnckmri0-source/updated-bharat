@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Eye, EyeOff } from "lucide-react";
-import { useSiteData, type FooterLink } from "@/lib/store";
+import { Plus, Trash2 } from "lucide-react";
+import { useSiteData, DEFAULT_DISPLAY, type FooterLink, type DisplaySettings } from "@/lib/store";
 import { Card, Btn, TInput, TArea, ImageInput, SaveBar } from "./ui";
 
 export function AdminSettings() {
@@ -338,5 +338,73 @@ export function AdminFooter() {
 
       <SaveBar onSave={save} saved={saved} />
     </div>
+  );
+}
+
+/** Display & Sections — every visible frontend section has an ON/OFF switch + counts. */
+export function AdminDisplay() {
+  const { data, update } = useSiteData();
+  const d = data.settings.display ?? DEFAULT_DISPLAY;
+  const [form, setForm] = useState({ ...DEFAULT_DISPLAY, ...d });
+  const [saved, setSaved] = useState(false);
+
+  const set = (k: keyof DisplaySettings, v: string | boolean | number) =>
+    setForm((f: DisplaySettings) => ({ ...f, [k]: v }) as DisplaySettings);
+
+  const save = () => {
+    const clean = {
+      ...form,
+      storiesCount: Math.max(1, Math.min(20, Number(form.storiesCount) || 6)),
+      latestCount: Math.max(1, Math.min(20, Number(form.latestCount) || 6)),
+      relatedCount: Math.max(0, Math.min(12, Number(form.relatedCount) || 0)),
+    };
+    update((dd) => ({
+      ...dd,
+      settings: { ...dd.settings, display: { ...dd.settings.display, ...clean } },
+    }));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  };
+
+  const toggles: { key: keyof DisplaySettings; label: string }[] = [
+    { key: "showTicker", label: "Breaking ticker (header)" },
+    { key: "showStoriesRow", label: "Web Stories row (homepage)" },
+    { key: "showHero", label: "Hero section (homepage)" },
+    { key: "showPoll", label: "Poll widget" },
+    { key: "showTrending", label: "Trending widget (sidebar)" },
+    { key: "showEpaper", label: "E-Paper widget (sidebar)" },
+    { key: "showNewsletter", label: "Newsletter widget (sidebar)" },
+    { key: "showTagsWidget", label: "Tags widget (sidebar)" },
+    { key: "showSocial", label: "Social Follow icons" },
+    { key: "showRelated", label: "Related stories (article page)" },
+    { key: "showBreadcrumbs", label: "Breadcrumbs (article page)" },
+    { key: "showShareBlock", label: "Share block (article page)" },
+    { key: "showAds", label: "Ad placeholders (Advertise Here boxes)" },
+  ];
+
+  return (
+    <Card title="Display & Sections" subtitle="Har visible section ka ON/OFF switch — save karte hi site par live.">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        {toggles.map((tg) => (
+          <label key={tg.key} className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-3 py-2.5 hover:bg-slate-50">
+            <input
+              type="checkbox"
+              checked={Boolean(form[tg.key])}
+              onChange={(e) => set(tg.key, e.target.checked)}
+              className="h-4 w-4 accent-orange-500"
+            />
+            <span className="text-[13px] font-semibold text-slate-700">{tg.label}</span>
+          </label>
+        ))}
+      </div>
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl">
+        <TInput label="Web Stories count" value={String(form.storiesCount)} onChange={(v) => set("storiesCount", Number(v.replace(/\D/g, "")) || 0)} />
+        <TInput label="Latest grid count" value={String(form.latestCount)} onChange={(v) => set("latestCount", Number(v.replace(/\D/g, "")) || 0)} />
+        <TInput label="Related stories count" value={String(form.relatedCount)} onChange={(v) => set("relatedCount", Number(v.replace(/\D/g, "")) || 0)} />
+      </div>
+      <div className="mt-4">
+        <SaveBar onSave={save} saved={saved} />
+      </div>
+    </Card>
   );
 }

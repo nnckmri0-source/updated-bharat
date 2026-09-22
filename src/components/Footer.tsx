@@ -82,7 +82,7 @@ export default function Footer() {
       {/* Footer Bottom Bar */}
       <div className="footer-bottom-bar">
         <div className="container" style={{ maxWidth: 1560, margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-          <p style={{ margin: 0 }}>© 2026 <strong style={{ color: "#fff" }}>{settings.name}</strong>. {settings.copyright || t("rightsReserved")}</p>
+          <p style={{ margin: 0 }}>© 2026 <strong style={{ color: "var(--text)" }}>{settings.name}</strong>. {settings.copyright || t("rightsReserved")}</p>
           <p style={{ margin: 0, fontSize: "0.75rem", opacity: 0.9 }}>
             Design &amp; Developed by{" "}
             <a href="https://zorvent.com" target="_blank" rel="noreferrer noopener" style={{ color: "var(--orange)", fontWeight: 800, letterSpacing: "0.3px" }}>

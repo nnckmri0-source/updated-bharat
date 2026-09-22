@@ -18,6 +18,7 @@ export type NewsArticle = {
   title: string;
   channel: string | null;
   channelName: string | null;
+  authorId?: string | null; // Author.id from SiteData.authors — shown on the article page
   date: string;
   content: string; // HTML or legacy "\n\n" paragraphs; rendered as HTML
   description?: string; // SEO excerpt under title
@@ -46,6 +47,13 @@ export type WebStory = {
 
 export type { Channel };
 
+/** Article authors — managed in the admin panel (Authors tab). */
+export type Author = {
+  id: string;
+  name: string;
+  image: string | null; // photo/icon URL (Storage) — initial letter shown when empty
+};
+
 export type EPaperEdition = {
   name: string;
   date: string;
@@ -70,6 +78,7 @@ export type SiteSettings = {
   logo: string;
   favicon: string;
   socialVisible: boolean;
+  display: DisplaySettings;
   footerAbout: string;
   copyright: string;
   adminUsername: string;
@@ -81,6 +90,45 @@ export type SiteSettings = {
   adsenseHeaderCode: string;
   adsenseInArticleCode: string;
   adsenseSidebarCode: string;
+};
+
+/** Frontend section visibility + counts — everything visible is admin-controllable. */
+export type DisplaySettings = {
+  showTicker: boolean;
+  showStoriesRow: boolean;
+  showHero: boolean;
+  showPoll: boolean;
+  showTrending: boolean;
+  showEpaper: boolean;
+  showNewsletter: boolean;
+  showTagsWidget: boolean;
+  showSocial: boolean;
+  showRelated: boolean;
+  showBreadcrumbs: boolean;
+  showShareBlock: boolean;
+  showAds: boolean;
+  storiesCount: number;
+  latestCount: number;
+  relatedCount: number;
+};
+
+export const DEFAULT_DISPLAY: DisplaySettings = {
+  showTicker: true,
+  showStoriesRow: true,
+  showHero: true,
+  showPoll: true,
+  showTrending: true,
+  showEpaper: true,
+  showNewsletter: true,
+  showTagsWidget: true,
+  showSocial: true,
+  showRelated: true,
+  showBreadcrumbs: true,
+  showShareBlock: true,
+  showAds: false, // placeholders hidden until the owner enables ads
+  storiesCount: 6,
+  latestCount: 6,
+  relatedCount: 4,
 };
 
 export type Poll = {
@@ -106,6 +154,7 @@ export type FooterConfig = {
 export type SiteData = {
   news: NewsArticle[];
   channels: Channel[];
+  authors: Author[];
   stories: WebStory[];
   editions: EPaperEdition[];
   settings: SiteSettings;
@@ -160,9 +209,13 @@ export function buildDefaults(): SiteData {
       description: (n as unknown as Record<string, unknown>).description as string | undefined ?? "",
       imageAlt: null,
       imageCaption: null,
+      authorId: null,
       image: norm(n.image),
     })),
     channels: defaultChannels.map((c) => ({ ...c, icon: norm(c.icon) })),
+    authors: [
+      { id: "updated-bharat", name: "Updated Bharat", image: null },
+    ],
     stories: defaultStories.map((s, i) => ({
       ...s,
       id: s.id ?? `story-${i}`,
@@ -188,6 +241,7 @@ export function buildDefaults(): SiteData {
       logo: norm(defaultSiteConfig.logo) ?? "",
       favicon: "",
       socialVisible: true,
+      display: { ...DEFAULT_DISPLAY },
       footerAbout: "Get the latest news delivered straight to your inbox.",
       copyright: "All rights reserved.",
       adminUsername: "bharat.admin",

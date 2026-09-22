@@ -2,9 +2,14 @@
 
 import ZorventByline from "@/components/ZorventByline";
 import { useLang, t } from "@/lib/i18n";
+import { useSiteData, DEFAULT_DISPLAY } from "@/lib/store";
 
 export default function AdSlot({ label }: { label?: string }) {
   useLang(); // re-render on language switch
+  const { data } = useSiteData();
+  const display = data.settings.display ?? DEFAULT_DISPLAY;
+  // Ad placeholders stay hidden until the owner enables ads in the panel.
+  if (!display.showAds) return null;
   const title = label || t("advertiseHere");
   return (
     <div className="text-center" style={{ margin: "16px 0", width: "100%" }}>

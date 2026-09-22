@@ -19,22 +19,25 @@ import {
   BarChart3,
   Eye,
   EyeOff,
+  Users,
 } from "lucide-react";
 import { useSiteData, ADMIN_AUTH_KEY } from "@/lib/store";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminNews from "@/components/admin/AdminNews";
 import AdminChannels from "@/components/admin/AdminChannels";
+import AdminAuthors from "@/components/admin/AdminAuthors";
 import AdminStories from "@/components/admin/AdminStories";
 import AdminHome from "@/components/admin/AdminHome";
 import AdminContent from "@/components/admin/AdminContent";
 import { AdminAds, AdminEPaper } from "@/components/admin/AdminAds";
-import { AdminSettings, AdminPassword, AdminFooter } from "@/components/admin/AdminSettings";
+import { AdminSettings, AdminPassword, AdminFooter, AdminDisplay } from "@/components/admin/AdminSettings";
 import AdminPolls from "@/components/admin/AdminPolls";
 
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "news", label: "News Articles", icon: Newspaper },
   { id: "channels", label: "Channels", icon: FolderOpen },
+  { id: "authors", label: "Authors", icon: Users },
   { id: "stories", label: "Web Stories", icon: Images },
   { id: "home", label: "Homepage", icon: Home },
   { id: "ticker", label: "Ticker & Trending", icon: Radio },
@@ -286,13 +289,14 @@ export default function AdminPage() {
           {tab === "dashboard" && <AdminDashboard onNavigate={setTab} />}
           {tab === "news" && <AdminNews />}
           {tab === "channels" && <AdminChannels />}
+          {tab === "authors" && <AdminAuthors />}
           {tab === "stories" && <AdminStories />}
           {tab === "home" && <AdminHome />}
           {tab === "ticker" && <AdminContent />}
           {tab === "ads" && <AdminAds />}
           {tab === "polls" && <AdminPolls />}
           {tab === "epaper" && <AdminEPaper />}
-          {tab === "settings" && <AdminSettings />}
+          {tab === "settings" && <><AdminSettings /><div className="mt-4"><AdminDisplay /></div></>}
           {tab === "footer" && <AdminFooter />}
           {tab === "password" && <AdminPassword />}
         </main>
