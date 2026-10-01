@@ -156,13 +156,18 @@ async function main() {
     const savedMsg = await evaluate(`document.body.innerText.includes("Saved ✓")`);
     check("Site name change saved", savedMsg);
 
-    // --- 3. verify on frontend ---
+    // --- 3. verify on frontend (poll — realtime sync can take a few seconds) ---
     await nav(BASE + "/");
-    const headerShows = await evaluate(`(() => {
-      const img = document.querySelector(".header-logo img");
-      const text = document.querySelector(".header-brand-text");
-      return img ? img.getAttribute("alt") : (text ? text.textContent.trim() : null);
-    })()`);
+    let headerShows = null;
+    for (let i = 0; i < 24; i++) {
+      headerShows = await evaluate(`(() => {
+        const img = document.querySelector(".header-logo img");
+        const text = document.querySelector(".header-brand-text");
+        return img ? img.getAttribute("alt") : (text ? text.textContent.trim() : null);
+      })()`);
+      if (headerShows === "Test News 123") break;
+      await sleepMs(500);
+    }
     check("Frontend header shows new name", headerShows === "Test News 123", `name="${headerShows}"`);
 
     const footerShows = await evaluate(`document.body.innerText.includes("Test News 123")`);
