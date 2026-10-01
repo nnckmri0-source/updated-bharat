@@ -178,6 +178,23 @@ export default function HomePage() {
 
         <AdSlot />
 
+        {/* Top News — mobile (desktop shows it in the left sidebar) */}
+        <div className="widget-box mb-3 d-lg-none">
+          <div className="section-head">
+            <div className="section-head-title">
+              <Zap size={15} /> {t("topNews")}
+            </div>
+            <Link href="/latest" className="section-head-more">
+              {t("seeAll")} <span>›</span>
+            </Link>
+          </div>
+          <div style={{ padding: "0 12px 12px" }}>
+            {sorted.slice(0, 4).map((a) => (
+              <BhaskarRow key={a.slug} article={a} />
+            ))}
+          </div>
+        </div>
+
         {/* Dynamic Channel Widgets — varied styles like the original site */}
         {home.widgets.map(({ slug, color, style }, wIdx) => {
           const items = byChannel(slug);

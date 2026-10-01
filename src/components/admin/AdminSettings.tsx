@@ -16,6 +16,7 @@ export function AdminSettings() {
     socialVisible: s.socialVisible !== false,
     footerAbout: s.footerAbout,
     copyright: s.copyright,
+    showCopyright: s.showCopyright !== false,
     liveUrl: s.liveUrl ?? "",
     facebook: s.social.facebook,
     twitter: s.social.twitter,
@@ -45,6 +46,7 @@ export function AdminSettings() {
           socialVisible: form.socialVisible,
           footerAbout: form.footerAbout.trim(),
           copyright: form.copyright.trim(),
+          showCopyright: form.showCopyright,
           liveUrl: form.liveUrl.trim(),
           social: { facebook: form.facebook, twitter: form.twitter, instagram: form.instagram, youtube: form.youtube, whatsapp: form.whatsapp },
           onesignalAppId: form.onesignalAppId.trim(),
@@ -73,6 +75,10 @@ export function AdminSettings() {
           </div>
           <TArea label="Footer About Text" value={form.footerAbout} onChange={(v) => set("footerAbout", v)} rows={2} />
           <TInput label="Footer Copyright Line" value={form.copyright} onChange={(v) => set("copyright", v)} />
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-4 py-3">
+            <input type="checkbox" checked={form.showCopyright} onChange={(e) => set("showCopyright", e.target.checked)} className="h-4 w-4 accent-orange-500" />
+            <span className="text-[13px] font-semibold text-slate-700">Show copyright line in footer (“All rights reserved”)</span>
+          </label>
           <TInput label="Live Stream URL (YouTube)" value={form.liveUrl} onChange={(v) => set("liveUrl", v)} placeholder="https://www.youtube.com/watch?v=..." />
           <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-4 py-3">
             <input type="checkbox" checked={form.socialVisible} onChange={(e) => set("socialVisible", e.target.checked)} className="h-4 w-4 accent-orange-500" />

@@ -9,7 +9,6 @@ import {
   Newspaper,
   Menu,
   X,
-  Flame,
   Radio,
   PlayCircle,
   FileText,
@@ -146,9 +145,6 @@ export default function Header() {
         {/* Mobile Scrolling Navs — Top News + categories */}
         <div className="mobile-top-navs d-md-none">
           <div className="mobile-cat-scroll">
-            <Link href="/" className="mobile-cat-item active">
-              <Flame size={12} style={{ color: "var(--orange)" }} /> {t("topNews")}
-            </Link>
             {headerNav.map((c) => (
               <Link key={c.slug} href={`/channel/${c.slug}`} className="mobile-cat-item" style={{ color: "inherit", textDecoration: "none" }}>
                 <CategoryIcon slug={c.slug} size={14} />
@@ -164,9 +160,6 @@ export default function Header() {
         <div className="category-nav-bar d-none d-md-block">
           <div style={{ maxWidth: 1560, margin: "0 auto" }}>
             <div className="category-nav-inner">
-              <Link href="/" className="cat-nav-item active">
-                <Flame size={13} /> {t("topNews")}
-              </Link>
               {headerNav.map((c) => (
                 <Link key={c.slug} href={`/channel/${c.slug}`} className="cat-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
                   <CategoryIcon slug={c.slug} size={13} />

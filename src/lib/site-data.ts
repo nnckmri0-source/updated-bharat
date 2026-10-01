@@ -121,6 +121,7 @@ export type SiteSettings = {
   storyStyle: StoryStyle;
   footerAbout: string;
   copyright: string;
+  showCopyright: boolean;
   adminUsername: string;
   adminPassword: string;
   liveUrl: string;
@@ -318,6 +319,7 @@ export function buildDefaults(): SiteData {
       storyStyle: { ...DEFAULT_STORY_STYLE },
       footerAbout: "Get the latest news delivered straight to your inbox.",
       copyright: "All rights reserved.",
+      showCopyright: true,
       adminUsername: "bharat.admin",
       adminPassword: "UB#2026$Bharat!Admin",
       liveUrl: "",
