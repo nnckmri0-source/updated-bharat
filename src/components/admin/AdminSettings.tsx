@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { useSiteData, DEFAULT_DISPLAY, type FooterLink, type DisplaySettings } from "@/lib/store";
-import { Card, Btn, TInput, TArea, ImageInput, SaveBar } from "./ui";
+import { useSiteData, DEFAULT_DISPLAY, DEFAULT_STORY_STYLE, type FooterLink, type DisplaySettings } from "@/lib/store";
+import { Card, Btn, TInput, TArea, TSelect, ImageInput, SaveBar } from "./ui";
 
 export function AdminSettings() {
   const { data, update, backendReady } = useSiteData();
@@ -401,6 +401,52 @@ export function AdminDisplay() {
         <TInput label="Web Stories count" value={String(form.storiesCount)} onChange={(v) => set("storiesCount", Number(v.replace(/\D/g, "")) || 0)} />
         <TInput label="Latest grid count" value={String(form.latestCount)} onChange={(v) => set("latestCount", Number(v.replace(/\D/g, "")) || 0)} />
         <TInput label="Related stories count" value={String(form.relatedCount)} onChange={(v) => set("relatedCount", Number(v.replace(/\D/g, "")) || 0)} />
+      </div>
+      <div className="mt-4">
+        <SaveBar onSave={save} saved={saved} />
+      </div>
+    </Card>
+  );
+}
+
+/** Web Story Style — card title font + entrance animation. */
+export function AdminStoryStyle() {
+  const { data, update } = useSiteData();
+  const s = data.settings.storyStyle ?? DEFAULT_STORY_STYLE;
+  const [font, setFont] = useState(s.font);
+  const [animation, setAnimation] = useState(s.animation);
+  const [saved, setSaved] = useState(false);
+
+  const save = () => {
+    update((d) => ({ ...d, settings: { ...d.settings, storyStyle: { font, animation } } }));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  };
+
+  return (
+    <Card title="Story Font & Animation" subtitle="Web story card titles + viewer slide style.">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+        <TSelect
+          label="Title font"
+          value={font}
+          onChange={(v) => setFont(v as typeof font)}
+          options={[
+            { value: "default", label: "Default (Poppins)" },
+            { value: "serif", label: "Serif" },
+            { value: "mono", label: "Mono" },
+          ]}
+        />
+        <TSelect
+          label="Card animation"
+          value={animation}
+          onChange={(v) => setAnimation(v as typeof animation)}
+          options={[
+            { value: "none", label: "None" },
+            { value: "fade", label: "Fade" },
+            { value: "slide", label: "Slide up" },
+            { value: "zoom", label: "Zoom" },
+          ]}
+        />
       </div>
       <div className="mt-4">
         <SaveBar onSave={save} saved={saved} />

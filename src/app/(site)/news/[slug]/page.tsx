@@ -1,6 +1,7 @@
 import { news } from "@/data/news";
 import NewsClient from "./NewsClient";
 import { getServerDoc } from "@/lib/server-doc";
+import { isPostVisible } from "@/lib/site-data";
 
 export async function generateStaticParams() {
   return news.map((n) => ({ slug: n.slug }));
@@ -24,11 +25,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function NewsPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function NewsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ preview?: string }> }) {
   const { slug } = await params;
+  const { preview } = await searchParams;
+  const isPreview = preview === "1";
   // Server snapshot of the article — first paint renders content instantly,
-  // no "loading story" flash for freshly published posts.
+  // no "loading story" flash for freshly published posts. Drafts/private posts
+  // are never leaked into the HTML unless explicitly previewed.
   const doc = await getServerDoc();
-  const initial = doc?.news.find((n) => n.slug === slug) ?? null;
-  return <NewsClient slug={slug} initial={initial} />;
+  const found = doc?.news.find((n) => n.slug === slug) ?? null;
+  const initial = found && (isPreview || isPostVisible(found)) ? found : null;
+  return <NewsClient slug={slug} initial={initial} preview={isPreview} />;
 }

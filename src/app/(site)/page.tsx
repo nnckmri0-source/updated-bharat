@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Zap } from "lucide-react";
-import { useSiteData, DEFAULT_DISPLAY, type NewsArticle } from "@/lib/store";
+import { useSiteData, DEFAULT_DISPLAY, visibleNews, type NewsArticle } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 import WebStoriesRow from "@/components/WebStoriesRow";
 import NewsCard from "@/components/NewsCard";
@@ -67,7 +67,9 @@ export function VideoWidget({ items }: { items: NewsArticle[] }) {
 export default function HomePage() {
   useLang(); // re-render labels on language switch
   const { data } = useSiteData();
-  const { news, channels, stories, home, settings } = data;
+  const { channels, stories, home, settings } = data;
+  // Drafts/private/future-scheduled posts never appear on the public site.
+  const news = visibleNews(data.news);
   const display = settings.display ?? DEFAULT_DISPLAY;
 
   const byChannel = (slug: string | null) => news.filter((n) => n.channel === slug);
@@ -79,13 +81,20 @@ export default function HomePage() {
     const db = new Date(b.date).getTime() || 0;
     return db - da;
   });
-  const heroArticle = news.find((n) => n.slug === home.heroMain) ?? sorted[0];
-  let subFeatured = home.subFeatured
-    .map((s) => news.find((n) => n.slug === s))
-    .filter(Boolean) as typeof news;
-  if (subFeatured.length < 3) {
-    const used = new Set([heroArticle?.slug, ...subFeatured.map((n) => n.slug)]);
-    subFeatured = [...subFeatured, ...sorted.filter((n) => !used.has(n.slug))].slice(0, 3);
+  const heroAuto = home.heroAuto !== false;
+  const heroArticle = heroAuto ? sorted[0] : (news.find((n) => n.slug === home.heroMain) ?? sorted[0]);
+  let subFeatured: typeof news;
+  if (heroAuto) {
+    // Newest post fills the hero automatically; older ones shift down.
+    subFeatured = sorted.filter((n) => n.slug !== heroArticle?.slug).slice(0, 3);
+  } else {
+    subFeatured = home.subFeatured
+      .map((s) => news.find((n) => n.slug === s))
+      .filter(Boolean) as typeof news;
+    if (subFeatured.length < 3) {
+      const used = new Set([heroArticle?.slug, ...subFeatured.map((n) => n.slug)]);
+      subFeatured = [...subFeatured, ...sorted.filter((n) => !used.has(n.slug))].slice(0, 3);
+    }
   }
   const latestCount = display.latestCount ?? 6;
   let latestGrid = home.latestGrid
@@ -199,6 +208,9 @@ export default function HomePage() {
           <PollWidget />
         </div>
         )}
+
+        {/* E-paper + Most Read — also on mobile */}
+        <RightSidebar mobileOnly />
       </div>
 
       {/* RIGHT SIDEBAR */}

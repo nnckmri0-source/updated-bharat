@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Clock, Share2, Calendar, BadgeCheck, FileQuestion } from "lucide-react";
-import { useSiteData, DEFAULT_DISPLAY, type NewsArticle } from "@/lib/store";
+import { useSiteData, DEFAULT_DISPLAY, isPostVisible, type NewsArticle } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 import RightSidebar from "@/components/RightSidebar";
 import AdSlot from "@/components/AdSlot";
@@ -56,7 +56,7 @@ function RichHtml({ html }: { html: string }) {
   return <div className="rich-article" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-export default function NewsClient({ slug, initial }: { slug: string; initial?: NewsArticle | null }) {
+export default function NewsClient({ slug, initial, preview }: { slug: string; initial?: NewsArticle | null; preview?: boolean }) {
   useLang(); // re-render labels on language switch
   const { data, hydrated } = useSiteData();
   const { news, channels, settings } = data;
@@ -79,7 +79,9 @@ export default function NewsClient({ slug, initial }: { slug: string; initial?: 
 
   // Server snapshot (first paint) wins until the live store hydrates — freshly
   // published posts render instantly with no "loading story" flash.
-  const article = hydrated ? (news.find((n) => n.slug === slug) ?? initial ?? null) : (initial ?? news.find((n) => n.slug === slug) ?? null);
+  // Drafts/private/future-scheduled posts stay hidden (admin preview only).
+  const found = hydrated ? (news.find((n) => n.slug === slug) ?? initial ?? null) : (initial ?? news.find((n) => n.slug === slug) ?? null);
+  const article = found && (preview || isPostVisible(found)) ? found : null;
 
   const shareThis = async () => {
     if (!article) return;

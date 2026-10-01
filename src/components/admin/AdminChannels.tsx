@@ -48,8 +48,21 @@ export default function AdminChannels() {
       news: d.news.map((n) => (n.channel === slug ? { ...n, channel: null, channelName: null } : n)),
       home: { ...d.home, widgets: d.home.widgets.filter((w) => w.slug !== slug) },
       footer: { ...d.footer, categorySlugs: d.footer.categorySlugs.filter((s) => s !== slug) },
+      settings: { ...d.settings, headerCategories: (d.settings.headerCategories ?? []).filter((s) => s !== slug) },
     }));
   };
+
+  const toggleHeaderNav = (slug: string) =>
+    update((d) => {
+      const cur = d.settings.headerCategories ?? [];
+      return {
+        ...d,
+        settings: {
+          ...d.settings,
+          headerCategories: cur.includes(slug) ? cur.filter((s) => s !== slug) : [...cur, slug],
+        },
+      };
+    });
 
   if (formOpen) {
     return (
@@ -84,9 +97,27 @@ export default function AdminChannels() {
   }
 
   return (
-    <Card
-      title={`Channels (${channels.length})`}
-      subtitle="Channels appear in the navigation, footer and homepage widgets."
+    <div className="space-y-4">
+      <Card
+        title="Header Categories"
+        subtitle="Ticked channels appear in the header scrolling nav (desktop + mobile). Unticked ones stay in the off-canvas menu."
+      >
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          {channels.map((c) => {
+            const checked = (data.settings.headerCategories ?? []).includes(c.slug);
+            return (
+              <label key={c.slug} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-[13px] transition ${checked ? "border-orange-400 bg-orange-50 text-orange-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
+                <input type="checkbox" checked={checked} onChange={() => toggleHeaderNav(c.slug)} className="accent-orange-500" />
+                <span className="truncate">{c.name}</span>
+              </label>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card
+        title={`Channels (${channels.length})`}
+        subtitle="Channels appear in the navigation, footer and homepage widgets."
       actions={
         <Btn onClick={openCreate}>
           <Plus size={14} /> Add Channel
@@ -119,5 +150,6 @@ export default function AdminChannels() {
         </div>
       )}
     </Card>
+    </div>
   );
 }

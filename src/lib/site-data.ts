@@ -19,12 +19,42 @@ export type NewsArticle = {
   channel: string | null;
   channelName: string | null;
   authorId?: string | null; // Author.id from SiteData.authors — shown on the article page
+  status?: PostStatus; // publish workflow — defaults to "published"
+  scheduledAt?: string | null; // ISO datetime — used when status === "scheduled"
   date: string;
   content: string; // HTML or legacy "\n\n" paragraphs; rendered as HTML
   description?: string; // SEO excerpt under title
   image: string | null;
   imageAlt?: string | null;
   imageCaption?: string | null;
+};
+
+/** Publish workflow states for articles. */
+export type PostStatus = "published" | "draft" | "private" | "scheduled";
+
+/** True when an article may appear on the public site right now. */
+export function isPostVisible(a: NewsArticle, now: number = Date.now()): boolean {
+  const s = a.status ?? "published";
+  if (s === "published") return true;
+  if (s === "scheduled") {
+    const t = a.scheduledAt ? new Date(a.scheduledAt).getTime() : NaN;
+    return !isNaN(t) && t <= now;
+  }
+  return false; // draft + private stay hidden (admin preview only)
+}
+
+/** Public-site article list — drafts/private/future-scheduled filtered out. */
+export function visibleNews(news: NewsArticle[], now: number = Date.now()): NewsArticle[] {
+  return news.filter((n) => isPostVisible(n, now));
+}
+
+/** Static content pages (Privacy Policy, Contact Us…) — admin-managed. */
+export type SitePage = {
+  id: string;
+  title: string;
+  slug: string;
+  content: string; // HTML from the rich editor
+  updatedAt?: string | null;
 };
 
 export type WebStorySlide = {
@@ -72,6 +102,14 @@ export type HomeWidget = {
   style?: "list" | "magazine" | "video";
 };
 
+/** Web-story card style — admin-selectable font + entrance animation. */
+export type StoryStyle = {
+  font: "default" | "serif" | "mono";
+  animation: "none" | "fade" | "slide" | "zoom";
+};
+
+export const DEFAULT_STORY_STYLE: StoryStyle = { font: "default", animation: "none" };
+
 export type SiteSettings = {
   name: string;
   tagline: string;
@@ -79,6 +117,8 @@ export type SiteSettings = {
   favicon: string;
   socialVisible: boolean;
   display: DisplaySettings;
+  headerCategories: string[]; // slugs shown in the header category nav (rest go to off-canvas)
+  storyStyle: StoryStyle;
   footerAbout: string;
   copyright: string;
   adminUsername: string;
@@ -140,6 +180,7 @@ export type Poll = {
 
 export type HomeConfig = {
   heroMain: string;
+  heroAuto: boolean; // when true, the newest post fills the hero automatically
   subFeatured: string[];
   latestGrid: string[];
   widgets: HomeWidget[];
@@ -155,6 +196,7 @@ export type SiteData = {
   news: NewsArticle[];
   channels: Channel[];
   authors: Author[];
+  pages: SitePage[];
   stories: WebStory[];
   editions: EPaperEdition[];
   settings: SiteSettings;
@@ -164,6 +206,11 @@ export type SiteData = {
   footer: FooterConfig;
   polls: Poll[];
 };
+
+/** Default header nav order (admin can change the selection in Channels tab). */
+export const DEFAULT_HEADER_CATEGORIES = [
+  "top-news", "local", "election-2026", "ipl-2026", "bhaskar-khaas", "db-original", "sports", "entertainment", "jobs-education", "business", "finance", "apple", "lifestyle", "jeevan-mantra", "women", "national", "international", "rashifal", "tech-auto", "fake-news-expose", "opinion", "madhurima", "magazine", "utility", "happy-life",
+];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -210,11 +257,36 @@ export function buildDefaults(): SiteData {
       imageAlt: null,
       imageCaption: null,
       authorId: null,
+      status: "published" as PostStatus,
+      scheduledAt: null,
       image: norm(n.image),
     })),
     channels: defaultChannels.map((c) => ({ ...c, icon: norm(c.icon) })),
     authors: [
       { id: "updated-bharat", name: "Updated Bharat", image: null },
+    ],
+    pages: [
+      {
+        id: "privacy-policy",
+        title: "Privacy Policy",
+        slug: "privacy-policy",
+        content: "<h2>Privacy Policy</h2><p>Updated Bharat respects your privacy. We do not sell personal data. Basic technical data (such as pages visited) may be used to improve the website experience.</p><p>For questions about this policy, contact us through the Contact Us page.</p>",
+        updatedAt: null,
+      },
+      {
+        id: "terms",
+        title: "Terms of Use",
+        slug: "terms",
+        content: "<h2>Terms of Use</h2><p>By using Updated Bharat you agree to use the content for personal, non-commercial purposes. News content may be updated or corrected at any time.</p>",
+        updatedAt: null,
+      },
+      {
+        id: "contact",
+        title: "Contact Us",
+        slug: "contact",
+        content: "<h2>Contact Us</h2><p>Have a news tip, correction or feedback? Reach out to the Updated Bharat team — we read every message.</p>",
+        updatedAt: null,
+      },
     ],
     stories: defaultStories.map((s, i) => ({
       ...s,
@@ -242,6 +314,8 @@ export function buildDefaults(): SiteData {
       favicon: "",
       socialVisible: true,
       display: { ...DEFAULT_DISPLAY },
+      headerCategories: [...DEFAULT_HEADER_CATEGORIES],
+      storyStyle: { ...DEFAULT_STORY_STYLE },
       footerAbout: "Get the latest news delivered straight to your inbox.",
       copyright: "All rights reserved.",
       adminUsername: "bharat.admin",
@@ -258,6 +332,7 @@ export function buildDefaults(): SiteData {
     trending: defaultSiteConfig.trending,
     home: {
       heroMain: "exclusive-blockbuster-movie-releases-emerge-as-key-trend-bi9n",
+      heroAuto: true,
       subFeatured: [
         "new-study-reveals-how-urban-green-space-essays-surpass-industry-expect-121r",
         "exclusive-scholarship-opportunities-win-global-recognition-8mze",
@@ -303,9 +378,9 @@ export function buildDefaults(): SiteData {
         { title: "Saved Stories", href: "/bookmarks" },
       ],
       tags: [
-        { title: "Privacy Policy", href: "/" },
-        { title: "Terms", href: "/" },
-        { title: "Sitemap", href: "/" },
+        { title: "Privacy Policy", href: "/page/privacy-policy" },
+        { title: "Terms", href: "/page/terms" },
+        { title: "Sitemap", href: "/sitemap.xml" },
         { title: "Advertise", href: "/" },
         { title: "Careers", href: "/" },
         { title: "RSS Feed", href: "/" },

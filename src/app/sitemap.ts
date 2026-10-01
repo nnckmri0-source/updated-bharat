@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { news } from "@/data/news";
 import { channels } from "@/data/channels";
 import { stories } from "@/data/stories";
+import { visibleNews } from "@/lib/site-data";
 
 const BASE = "https://updatedbharat.appleofeve.co.in";
 
@@ -18,7 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/bookmarks`, changeFrequency: "monthly", priority: 0.3 },
   ];
 
-  const newsRoutes: MetadataRoute.Sitemap = news.map((n) => ({
+  const newsRoutes: MetadataRoute.Sitemap = visibleNews(news).map((n) => ({
     url: `${BASE}/news/${n.slug}`,
     changeFrequency: "weekly" as const,
     priority: 0.8,

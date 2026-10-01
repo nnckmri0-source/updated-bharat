@@ -92,7 +92,7 @@ async function main() {
     storyReel: (() => { const r = document.querySelector(".story-ring"); return r ? getComputedStyle(r).borderRadius : null; })(),
   }))()`);
   console.log("ARTICLE:", JSON.stringify(article));
-  check("article has Advertise Here placeholders", article.placeholders >= 3, `count=${article.placeholders}`);
+  check("article hides Advertise Here placeholders (ads off by default)", article.placeholders === 0, `count=${article.placeholders}`);
   check("no webkar images", !article.hasWebkar);
   check("no dainik logo", !article.hasDainik);
   check("brand = Updated Bharat", article.brandText === "Updated Bharat");

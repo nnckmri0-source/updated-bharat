@@ -6,7 +6,29 @@ import { useSiteData, slugify, norm, type NewsArticle } from "@/lib/store";
 import { Card, Btn, TInput, TArea, TSelect, ImageInput, EmptyState } from "./ui";
 import RichTextEditor from "./RichTextEditor";
 
-const emptyForm = { title: "", slug: "", channel: "", author: "", date: "", image: "", imageAlt: "", imageCaption: "", description: "", content: "" };
+const emptyForm = { title: "", slug: "", channel: "", author: "", status: "published", scheduledAt: "", date: "", image: "", imageAlt: "", imageCaption: "", description: "", content: "" };
+
+const STATUS_OPTIONS = [
+  { value: "published", label: "Published — live now" },
+  { value: "draft", label: "Draft — hidden" },
+  { value: "private", label: "Private — hidden" },
+  { value: "scheduled", label: "Scheduled — auto-publish at time" },
+];
+
+const STATUS_BADGE: Record<string, string> = {
+  published: "bg-green-100 text-green-700",
+  draft: "bg-slate-100 text-slate-500",
+  private: "bg-purple-100 text-purple-700",
+  scheduled: "bg-blue-100 text-blue-700",
+};
+
+/** ISO datetime → datetime-local input value (local timezone). */
+function toLocalInput(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
 export default function AdminNews() {
   const { data, update } = useSiteData();
@@ -25,7 +47,7 @@ export default function AdminNews() {
   };
 
   const openEdit = (a: NewsArticle) => {
-    setForm({ title: a.title, slug: a.slug, channel: a.channel ?? "", author: a.authorId ?? "", date: a.date, image: a.image ?? "", imageAlt: a.imageAlt ?? "", imageCaption: a.imageCaption ?? "", description: a.description ?? "", content: a.content });
+    setForm({ title: a.title, slug: a.slug, channel: a.channel ?? "", author: a.authorId ?? "", status: a.status ?? "published", scheduledAt: a.scheduledAt ? toLocalInput(a.scheduledAt) : "", date: a.date, image: a.image ?? "", imageAlt: a.imageAlt ?? "", imageCaption: a.imageCaption ?? "", description: a.description ?? "", content: a.content });
     setEditingSlug(a.slug);
     setFormOpen(true);
   };
@@ -40,6 +62,8 @@ export default function AdminNews() {
       channel: channel?.slug ?? null,
       channelName: channel?.name ?? null,
       authorId: form.author || null,
+      status: (form.status || "published") as NewsArticle["status"],
+      scheduledAt: form.status === "scheduled" && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null,
       date: form.date.trim() || "Today",
       description: form.description.trim(),
       content: form.content.trim() || form.title.trim(),
@@ -78,6 +102,10 @@ export default function AdminNews() {
           <TInput label="Slug (URL)" value={form.slug} onChange={(v) => setForm({ ...form, slug: v })} hint="news/{slug} — auto-generated from title" />
           <TSelect label="Channel" value={form.channel} onChange={(v) => setForm({ ...form, channel: v })} options={channelOptions} />
           <TSelect label="Author" value={form.author} onChange={(v) => setForm({ ...form, author: v })} options={[{ value: "", label: "— Site name —" }, ...authors.map((a) => ({ value: a.id, label: a.name }))]} />
+          <TSelect label="Status" value={form.status} onChange={(v) => setForm({ ...form, status: v })} options={STATUS_OPTIONS} />
+          {form.status === "scheduled" && (
+            <TInput label="Publish at" type="datetime-local" value={form.scheduledAt} onChange={(v) => setForm({ ...form, scheduledAt: v })} hint="Post goes live automatically at this time" />
+          )}
           <TInput label="Date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} placeholder="Apr 23, 2026" />
           <div className="md:col-span-2">
             <TArea label="Description (SEO excerpt) — 150-160 chars" value={form.description} onChange={(v) => setForm({ ...form, description: v })} rows={2} placeholder="Short summary shown under title and in Google results…" hint={`${form.description.length}/320 chars — shown under title + meta description`} />
@@ -95,10 +123,20 @@ export default function AdminNews() {
             <p className="text-[11px] text-slate-400 mt-1">Legacy: plain paragraphs separated by blank line, YouTube URL on its own line, or <code>IMG:https://…</code> still works. New editor stores rich HTML with headings & inline images (caption/alt).</p>
           </div>
         </div>
-        <div className="mt-5 flex gap-2">
+        <div className="mt-5 flex flex-wrap gap-2">
           <Btn onClick={save} disabled={!form.title.trim() || !form.slug.trim()}>
-            {editingSlug ? "Save Changes" : "Publish Article"}
+            {editingSlug ? "Save Changes" : form.status === "draft" ? "Save Draft" : form.status === "scheduled" ? "Schedule Post" : "Publish Article"}
           </Btn>
+          {(editingSlug || form.slug.trim()) && (
+            <a
+              href={`/news/${editingSlug ?? slugify(form.slug.trim())}?preview=1`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Preview
+            </a>
+          )}
           <Btn variant="secondary" onClick={() => setFormOpen(false)}>
             Cancel
           </Btn>
@@ -144,12 +182,13 @@ export default function AdminNews() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-[13px]">
             <thead>
-              <tr className="border-b border-slate-100 text-[11px] uppercase tracking-wide text-slate-400">
-                <th className="py-2 pr-3 font-semibold">Article</th>
-                <th className="py-2 pr-3 font-semibold">Channel</th>
-                <th className="py-2 pr-3 font-semibold">Date</th>
-                <th className="py-2 font-semibold text-right">Actions</th>
-              </tr>
+                <tr className="border-b border-slate-100 text-[11px] uppercase tracking-wide text-slate-400">
+                  <th className="py-2 pr-3 font-semibold">Article</th>
+                  <th className="py-2 pr-3 font-semibold">Channel</th>
+                  <th className="py-2 pr-3 font-semibold">Status</th>
+                  <th className="py-2 pr-3 font-semibold">Date</th>
+                  <th className="py-2 font-semibold text-right">Actions</th>
+                </tr>
             </thead>
             <tbody>
               {filtered.map((n) => (
@@ -167,8 +206,13 @@ export default function AdminNews() {
                       </div>
                     </div>
                   </td>
-                  <td className="py-2.5 pr-3 text-slate-500">{n.channelName ?? "—"}</td>
-                  <td className="py-2.5 pr-3 text-slate-500">{n.date}</td>
+                    <td className="py-2.5 pr-3 text-slate-500">{n.channelName ?? "—"}</td>
+                    <td className="py-2.5 pr-3">
+                      <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${STATUS_BADGE[n.status ?? "published"] ?? STATUS_BADGE.published}`}>
+                        {n.status ?? "published"}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-3 text-slate-500">{n.date}</td>
                   <td className="py-2.5">
                     <div className="flex justify-end gap-1.5">
                       <Btn variant="secondary" small onClick={() => openEdit(n)}>

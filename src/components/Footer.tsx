@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ChevronRight, Link2, Grid3x3, Mail, MoreHorizontal } from "lucide-react";
-import { useSiteData } from "@/lib/store";
+import { useSiteData, DEFAULT_DISPLAY } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 import NewsletterForm from "@/components/NewsletterForm";
 import { SocialButtons } from "@/components/SocialRow";
@@ -11,6 +11,7 @@ export default function Footer() {
   useLang(); // re-render labels on language switch
   const { data } = useSiteData();
   const { channels, settings, footer } = data;
+  const display = settings.display ?? DEFAULT_DISPLAY;
   const footerCategories = channels.filter((c) => footer.categorySlugs.includes(c.slug));
 
   return (
@@ -19,7 +20,7 @@ export default function Footer() {
       <div className="footer-brand-strip">
         <div className="container" style={{ maxWidth: 1560, margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div className="footer-brand-name">{settings.name}</div>
-          {settings.socialVisible !== false && <SocialButtons social={settings.social} variant="strip" />}
+          {settings.socialVisible !== false && display.showSocial !== false && <SocialButtons social={settings.social} variant="strip" />}
         </div>
       </div>
 

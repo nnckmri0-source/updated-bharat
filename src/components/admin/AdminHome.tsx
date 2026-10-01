@@ -59,7 +59,18 @@ export default function AdminHome() {
     <div className="space-y-4">
       {/* Hero */}
       <Card title="Hero (Big Featured Story)" subtitle="The large image at the very top of the homepage.">
-        <TSelect label="Main Hero Article" value={home.heroMain} onChange={setHeroMain} options={articleOptions} />
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 mb-4">
+          <input
+            type="checkbox"
+            checked={home.heroAuto !== false}
+            onChange={(e) => update((d) => ({ ...d, home: { ...d.home, heroAuto: e.target.checked } }))}
+            className="h-4 w-4 accent-orange-500"
+          />
+          <span className="text-[13px] font-semibold text-slate-700">Auto latest — newest post always fills the hero (recommended)</span>
+        </label>
+        {home.heroAuto === false && (
+          <TSelect label="Main Hero Article (manual)" value={home.heroMain} onChange={setHeroMain} options={articleOptions} />
+        )}
       </Card>
 
       {/* Sub featured */}

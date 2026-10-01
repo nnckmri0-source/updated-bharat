@@ -4,13 +4,12 @@ import Link from "next/link";
 import { Home, Flame } from "lucide-react";
 import { useSiteData, channelsBySlugList } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
-import { SocialButtons } from "@/components/SocialRow";
 import CategoryIcon from "@/components/CategoryIcon";
 
 export default function LeftSidebar() {
   useLang(); // re-render labels on language switch
   const { data } = useSiteData();
-  const { channels, settings } = data;
+  const { channels } = data;
 
   // Fixed display order — buttons never shuffle when data loads from Firebase.
   const mainChannels = channelsBySlugList(channels, [
@@ -38,11 +37,6 @@ export default function LeftSidebar() {
           <span className="nav-icon"><CategoryIcon slug={c.slug} size={16} /></span> {c.name}
         </Link>
       ))}
-
-      <div className="sidebar-app-section">
-        <div className="sidebar-app-label">{t("followUs")}</div>
-        {settings.socialVisible !== false && <SocialButtons social={settings.social} />}
-      </div>
 
       {/* Top Stories — fills the left column space with useful content */}
       <div className="sidebar-app-label" style={{ marginTop: 16 }}>

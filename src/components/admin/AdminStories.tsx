@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Pencil, Plus, Trash2, ArrowLeft, Image as ImgIcon } from "lucide-react";
 import { useSiteData, norm, slugify, type WebStory, type WebStorySlide } from "@/lib/store";
 import { Card, Btn, TInput, TArea, ImageInput, EmptyState } from "./ui";
+import { AdminStoryStyle } from "./AdminSettings";
 
 export default function AdminStories() {
   const { data, update } = useSiteData();
@@ -117,6 +118,7 @@ export default function AdminStories() {
   }
 
   return (
+    <div className="space-y-4">
     <Card
       title={`Web Stories (${stories.length})`}
       subtitle="Stories appear in the Web Stories row on the homepage."
@@ -149,5 +151,7 @@ export default function AdminStories() {
         </div>
       )}
     </Card>
+    <AdminStoryStyle />
+    </div>
   );
 }

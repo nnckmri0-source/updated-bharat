@@ -89,6 +89,7 @@ const dict: Record<string, Record<string, string>> = {
     bookmarks: "Bookmarks",
     noResults: "No results found",
     channelNotFound: "Channel not found",
+    pageNotFound: "Page not found",
     topicChannel: "Topic Channel",
     noStoriesInChannel: "No stories in this channel yet. Check back soon!",
   },

@@ -88,7 +88,7 @@ async function main() {
   check("nav-icon circle 28px", r.navIconSize === 28 && r.navIconRadius === "50%", `${r.navIconSize}/${r.navIconRadius}`);
   check("right sidebar 380px", r.rightWidth === 380, String(r.rightWidth));
   check("widget-title navy bg + white text", r.widgetTitleBg === "rgb(26, 26, 46)" && r.widgetTitleColor === "rgb(255, 255, 255)", `${r.widgetTitleBg}/${r.widgetTitleColor}`);
-  check("footer navy bg", r.footerBg === "rgb(26, 26, 46)", r.footerBg);
+  check("footer white bg", r.footerBg === "rgb(255, 255, 255)", r.footerBg);
   check("real brand svg icons present", r.socialSvgCount >= 10, `count=${r.socialSvgCount}`);
   check("whatsapp icon present", !!r.whatsapp);
 

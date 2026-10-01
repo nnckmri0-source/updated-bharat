@@ -16,11 +16,10 @@ import {
   ChevronRight,
   ArrowLeft,
 } from "lucide-react";
-import { useSiteData, orderChannels, channelsBySlugList, DEFAULT_DISPLAY } from "@/lib/store";
+import { useSiteData, orderChannels, channelsBySlugList, DEFAULT_DISPLAY, DEFAULT_HEADER_CATEGORIES } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import NotificationBell from "@/components/NotificationBell";
 import CategoryIcon from "@/components/CategoryIcon";
-import { SocialButtons } from "@/components/SocialRow";
 
 export default function Header() {
   const { data } = useSiteData();
@@ -46,15 +45,11 @@ export default function Header() {
     }, 2500);
   };
 
-  // channel groups for the nav — ALWAYS in the canonical order below, so the
-  // buttons never shuffle when data loads from localStorage/Firebase.
-  const primaryNav = channelsBySlugList(channels, [
-    "local", "election-2026", "ipl-2026", "db-original", "lifestyle", "science", "uttar-pradesh", "opinion", "jeevan-mantra", "jobs-education", "tech-auto", "finance", "apple",
-  ]);
-  const leftNavTop = channelsBySlugList(channels, [
-    "top-news", "local", "election-2026", "ipl-2026", "bhaskar-khaas", "db-original", "sports", "entertainment", "jobs-education", "business", "finance", "apple", "lifestyle", "jeevan-mantra", "women", "national", "international", "rashifal", "tech-auto", "fake-news-expose", "opinion", "madhurima", "magazine", "utility", "happy-life",
-  ]);
-  const leftNavAll = orderChannels(channels).filter((c) => c.slug !== "0" && !leftNavTop.some((t) => t.slug === c.slug));
+  // Header nav = admin-selected categories (Channels tab). Anything not
+  // selected stays in the off-canvas menu. Order never shuffles.
+  const headerSlugs = settings.headerCategories?.length ? settings.headerCategories : DEFAULT_HEADER_CATEGORIES;
+  const headerNav = channelsBySlugList(channels, headerSlugs);
+  const restNav = orderChannels(channels).filter((c) => c.slug !== "0" && !headerSlugs.includes(c.slug));
   const stateChannels = channelsBySlugList(channels, ["madhya-pradesh", "uttar-pradesh", "rajasthan", "bihar"]);
 
   const router = useRouter();
@@ -154,7 +149,7 @@ export default function Header() {
             <Link href="/" className="mobile-cat-item active">
               <Flame size={12} style={{ color: "var(--orange)" }} /> {t("topNews")}
             </Link>
-            {primaryNav.map((c) => (
+            {headerNav.map((c) => (
               <Link key={c.slug} href={`/channel/${c.slug}`} className="mobile-cat-item" style={{ color: "inherit", textDecoration: "none" }}>
                 <CategoryIcon slug={c.slug} size={14} />
                 {c.name}
@@ -172,7 +167,7 @@ export default function Header() {
               <Link href="/" className="cat-nav-item active">
                 <Flame size={13} /> {t("topNews")}
               </Link>
-              {leftNavAll.map((c) => (
+              {headerNav.map((c) => (
                 <Link key={c.slug} href={`/channel/${c.slug}`} className="cat-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
                   <CategoryIcon slug={c.slug} size={13} />
                   {c.name}
@@ -233,7 +228,7 @@ export default function Header() {
             </span>{" "}
             {t("home")}
           </Link>
-          {leftNavTop.map((c) => (
+          {restNav.map((c) => (
             <Link key={c.slug} href={`/channel/${c.slug}`} className="left-nav-item" style={{ color: "inherit", textDecoration: "none" }}>
               <span className="nav-icon"><CategoryIcon slug={c.slug} size={16} /></span> {c.name}
             </Link>
@@ -244,12 +239,6 @@ export default function Header() {
               <span className="nav-icon"><CategoryIcon slug={c.slug} size={16} /></span> {c.name}
             </Link>
           ))}
-
-          {/* Follow (Mobile Offcanvas) */}
-          <div className="sidebar-app-section" style={{ paddingBottom: 20 }}>
-            <div className="sidebar-app-label">{t("followUs")}</div>
-            {settings.socialVisible !== false && <SocialButtons social={settings.social} />}
-          </div>
         </div>
       </div>
 

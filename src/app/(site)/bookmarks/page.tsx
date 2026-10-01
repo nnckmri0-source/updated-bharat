@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Bookmark, BookmarkX } from "lucide-react";
-import { useSiteData } from "@/lib/store";
+import { useSiteData, visibleNews } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 import BhaskarRow from "@/components/BhaskarRow";
 
@@ -33,7 +33,7 @@ export default function BookmarksPage() {
   }, []);
 
   const { data } = useSiteData();
-  const saved = data.news.filter((n) => savedSlugs.includes(n.slug));
+  const saved = visibleNews(data.news).filter((n) => savedSlugs.includes(n.slug));
 
   return (
     <div className="container" style={{ maxWidth: 900, margin: "0 auto", padding: "24px 0" }}>

@@ -3,9 +3,16 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { X, Share2, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
-import type { WebStory } from "@/lib/store";
+import { useSiteData, DEFAULT_STORY_STYLE, type WebStory } from "@/lib/store";
+
+const ANIM_CLASS = { none: "", fade: "story-anim-fade", slide: "story-anim-slide", zoom: "story-anim-zoom" } as const;
+const FONT_CLASS = { default: "", serif: "story-font-serif", mono: "story-font-mono" } as const;
 
 export default function VisualStoryViewer({ story }: { story: WebStory }) {
+  const { data } = useSiteData();
+  const style = data.settings.storyStyle ?? DEFAULT_STORY_STYLE;
+  const anim = ANIM_CLASS[style.animation] ?? "";
+  const font = FONT_CLASS[style.font] ?? "";
   const slides = story.slides && story.slides.length > 0
     ? story.slides
     : [{ image: story.image, title: story.title, caption: story.description ?? "", alt: story.title }];
@@ -140,7 +147,7 @@ export default function VisualStoryViewer({ story }: { story: WebStory }) {
         onMouseLeave={() => setPaused(false)}
       >
         {/* Image */}
-        <div className="relative h-[100dvh] w-full max-w-[420px] mx-auto bg-black flex flex-col">
+        <div key={idx} className={`relative h-[100dvh] w-full max-w-[420px] mx-auto bg-black flex flex-col ${anim}`}>
           {slide.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -162,7 +169,7 @@ export default function VisualStoryViewer({ story }: { story: WebStory }) {
                 {story.category}
               </span>
             )}
-            <h1 className="text-[18px] md:text-[20px] font-extrabold leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,.6)]">
+            <h1 className={`text-[18px] md:text-[20px] font-extrabold leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,.6)] ${font}`}>
               {slide.title || story.title}
             </h1>
             {slide.caption && (

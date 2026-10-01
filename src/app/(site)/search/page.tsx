@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
-import { useSiteData } from "@/lib/store";
+import { useSiteData, visibleNews } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 import BhaskarRow from "@/components/BhaskarRow";
 
@@ -11,7 +11,7 @@ function SearchInner() {
   useLang(); // re-render labels on language switch
   const searchParams = useSearchParams();
   const { data } = useSiteData();
-  const { news } = data;
+  const news = visibleNews(data.news);
   const q = searchParams.get("q") ?? "";
   const query = q.trim().toLowerCase();
 

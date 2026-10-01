@@ -30,15 +30,19 @@ import {
   FALLBACK_STORY_IMG,
   FALLBACK_EPAPER_IMG,
   DEFAULT_DISPLAY,
+  DEFAULT_STORY_STYLE,
+  DEFAULT_HEADER_CATEGORIES,
+  isPostVisible,
+  visibleNews,
   type SiteData,
 } from "@/lib/site-data";
 import { getDb, FIREBASE_READY } from "@/lib/firebase";
 import { ref, onValue } from "firebase/database";
 
 // Re-export everything the rest of the app imports from "@/lib/store".
-export type { SiteData, NewsArticle, WebStory, WebStorySlide, EPaperEdition, FooterLink, HomeWidget, SiteSettings, Poll, HomeConfig, FooterConfig, Author, DisplaySettings } from "@/lib/site-data";
+export type { SiteData, NewsArticle, WebStory, WebStorySlide, EPaperEdition, FooterLink, HomeWidget, SiteSettings, Poll, HomeConfig, FooterConfig, Author, DisplaySettings, SitePage, PostStatus, StoryStyle } from "@/lib/site-data";
 export type { Channel } from "@/lib/site-data";
-export { buildDefaults, norm, slugify, STORAGE_KEY, ADMIN_AUTH_KEY, FALLBACK_IMG, FALLBACK_STORY_IMG, FALLBACK_EPAPER_IMG, DEFAULT_DISPLAY };
+export { buildDefaults, norm, slugify, STORAGE_KEY, ADMIN_AUTH_KEY, FALLBACK_IMG, FALLBACK_STORY_IMG, FALLBACK_EPAPER_IMG, DEFAULT_DISPLAY, DEFAULT_STORY_STYLE, DEFAULT_HEADER_CATEGORIES, isPostVisible, visibleNews };
 export { orderChannels, channelsBySlugList } from "@/lib/site-data";
 
 // ---------------------------------------------------------------------------

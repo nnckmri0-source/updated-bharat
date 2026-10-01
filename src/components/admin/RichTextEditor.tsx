@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Bold, Italic, Underline, Heading1, Heading2, Heading3, Link2, Image as ImageIcon, Video, Quote, List, ListOrdered, Loader2 } from "lucide-react";
+import { Bold, Italic, Underline, Heading1, Heading2, Heading3, Link2, Image as ImageIcon, Video, Quote, List, ListOrdered, Loader2, Undo2, Redo2, Type } from "lucide-react";
 import { compressImage, uploadCompressedImage } from "@/lib/image-compress";
 
 type Props = {
@@ -107,13 +107,70 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
 
   const onInput = () => onChange(ref.current?.innerHTML ?? "");
 
+  const canUndoRedo = () => {
+    try {
+      return { undo: document.queryCommandEnabled("undo"), redo: document.queryCommandEnabled("redo") };
+    } catch {
+      return { undo: true, redo: true };
+    }
+  };
+
+  const applyFontSize = (px: string) => {
+    if (!px) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    const span = document.createElement("span");
+    span.style.fontSize = `${px}px`;
+    try {
+      range.surroundContents(span);
+    } catch {
+      // selection spans multiple nodes — wrap via extract/insert
+      span.appendChild(range.extractContents());
+      range.insertNode(span);
+    }
+    sel.removeAllRanges();
+    ref.current?.focus();
+    onChange(ref.current?.innerHTML ?? "");
+  };
+
+  const applyColor = (color: string) => {
+    if (!color) return;
+    ref.current?.focus();
+    exec("foreColor", color);
+  };
+
   return (
     <div className="rounded-xl border border-slate-300 bg-white overflow-hidden">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 px-2 py-2">
+        <ToolBtn onClick={() => exec("undo")} title="Undo"><Undo2 size={16} /></ToolBtn>
+        <ToolBtn onClick={() => exec("redo")} title="Redo"><Redo2 size={16} /></ToolBtn>
+        <div className="mx-1 h-5 w-px bg-slate-300" />
         <ToolBtn onClick={() => wrapBlock("h1")} title="H1"><Heading1 size={16} /></ToolBtn>
         <ToolBtn onClick={() => wrapBlock("h2")} title="H2"><Heading2 size={16} /></ToolBtn>
         <ToolBtn onClick={() => wrapBlock("h3")} title="H3"><Heading3 size={16} /></ToolBtn>
+        <div className="mx-1 h-5 w-px bg-slate-300" />
+        <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1" title="Typography — font size">
+          <Type size={13} className="text-slate-500" />
+          <select
+            defaultValue=""
+            onChange={(e) => { applyFontSize(e.target.value); e.target.value = ""; }}
+            className="bg-transparent text-[12px] font-semibold text-slate-700 outline-none cursor-pointer"
+            title="Font size"
+          >
+            <option value="">Size</option>
+            <option value="14">Small</option>
+            <option value="16">Normal</option>
+            <option value="18">Medium</option>
+            <option value="22">Large</option>
+            <option value="28">XL</option>
+          </select>
+        </span>
+        <label className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100" title="Text color">
+          <span className="block h-4 w-4 rounded border border-slate-300" style={{ background: "linear-gradient(135deg,#e63946,#f47216,#4361EE,#06D6A0)" }} />
+          <input type="color" className="hidden" onChange={(e) => applyColor(e.target.value)} />
+        </label>
         <div className="mx-1 h-5 w-px bg-slate-300" />
         <ToolBtn onClick={() => exec("bold")} title="Bold"><Bold size={16} /></ToolBtn>
         <ToolBtn onClick={() => exec("italic")} title="Italic"><Italic size={16} /></ToolBtn>
@@ -171,7 +228,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
         onInput={onInput}
         onBlur={onInput}
         data-placeholder={placeholder}
-        className="min-h-[260px] max-h-[520px] overflow-y-auto px-4 py-3 text-[14px] leading-7 text-slate-800 outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 prose prose-sm max-w-none"
+        className="rich-editor min-h-[260px] max-h-[520px] overflow-y-auto px-4 py-3 text-[14px] leading-7 text-slate-800 outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 prose prose-sm max-w-none"
         style={{ wordBreak: "break-word" }}
       />
 

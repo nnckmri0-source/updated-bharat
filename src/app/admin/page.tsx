@@ -20,12 +20,14 @@ import {
   Eye,
   EyeOff,
   Users,
+  FileText as FileTextIcon,
 } from "lucide-react";
 import { useSiteData, ADMIN_AUTH_KEY } from "@/lib/store";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminNews from "@/components/admin/AdminNews";
 import AdminChannels from "@/components/admin/AdminChannels";
 import AdminAuthors from "@/components/admin/AdminAuthors";
+import AdminPages from "@/components/admin/AdminPages";
 import AdminStories from "@/components/admin/AdminStories";
 import AdminHome from "@/components/admin/AdminHome";
 import AdminContent from "@/components/admin/AdminContent";
@@ -38,6 +40,7 @@ const TABS = [
   { id: "news", label: "News Articles", icon: Newspaper },
   { id: "channels", label: "Channels", icon: FolderOpen },
   { id: "authors", label: "Authors", icon: Users },
+  { id: "pages", label: "Pages", icon: FileTextIcon },
   { id: "stories", label: "Web Stories", icon: Images },
   { id: "home", label: "Homepage", icon: Home },
   { id: "ticker", label: "Ticker & Trending", icon: Radio },
@@ -290,6 +293,7 @@ export default function AdminPage() {
           {tab === "news" && <AdminNews />}
           {tab === "channels" && <AdminChannels />}
           {tab === "authors" && <AdminAuthors />}
+          {tab === "pages" && <AdminPages />}
           {tab === "stories" && <AdminStories />}
           {tab === "home" && <AdminHome />}
           {tab === "ticker" && <AdminContent />}

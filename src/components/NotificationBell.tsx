@@ -3,14 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, Radio, CheckCheck, History } from "lucide-react";
-import { useSiteData } from "@/lib/store";
+import { useSiteData, visibleNews } from "@/lib/store";
 import { useLang, t } from "@/lib/i18n";
 
 const SEEN_KEY = "ub_notif_seen";
 
 export default function NotificationBell() {
   const { data } = useSiteData();
-  const { news, ticker } = data;
+  const { ticker } = data;
+  const news = visibleNews(data.news);
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
